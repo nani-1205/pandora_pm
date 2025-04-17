@@ -14,7 +14,6 @@ class User(UserMixin):
 
     @property
     def id(self):
-        # Ensure ID is always returned as string
         return str(self.data.get('_id'))
 
     @property
@@ -27,7 +26,7 @@ class User(UserMixin):
 
     @property
     def role(self):
-        return self.data.get('role', 'user') # Default role
+        return self.data.get('role', 'user')
 
     @property
     def is_admin(self):
@@ -35,11 +34,9 @@ class User(UserMixin):
 
     def check_password(self, password):
         stored_hash = self.data.get('password_hash')
-        if stored_hash:
-            return bcrypt.check_password_hash(stored_hash, password)
+        if stored_hash: return bcrypt.check_password_hash(stored_hash, password)
         return False
 
-    # Static methods for DB operations
     @staticmethod
     def find_by_username(username):
         return mongo.db.users.find_one({'username': username})
@@ -48,196 +45,122 @@ class User(UserMixin):
     def find_by_email(email):
         return mongo.db.users.find_one({'email': email})
 
-    # === Add Debugging to User.get_by_id ===
     @staticmethod
     def get_by_id(user_id):
-        # --- DEBUG ---
-        # print(f"--- User.get_by_id: Attempting to find user with raw id: '{user_id}' (type: {type(user_id)}) ---")
-        # --- END DEBUG ---
+        # print(f"--- User.get_by_id: Attempting id: '{user_id}' ---") # Optional Debug
         try:
             user_obj_id = ObjectId(user_id)
-             # --- DEBUG ---
-            # print(f"--- User.get_by_id: Converted id to ObjectId: {user_obj_id} ---")
-             # --- END DEBUG ---
+            # print(f"--- User.get_by_id: Converted to ObjectId: {user_obj_id} ---") # Optional Debug
             user_data = mongo.db.users.find_one({'_id': user_obj_id})
-            # --- DEBUG ---
-            # print(f"--- User.get_by_id: Found user data: {'Yes' if user_data else 'No'} ---")
-            # --- END DEBUG ---
-            if user_data:
-                return User(user_data)
-        except (bson_errors.InvalidId, TypeError) as e:
-            # --- DEBUG ---
-            print(f"--- User.get_by_id: ERROR converting id '{user_id}' to ObjectId: {e} ---")
-            # --- END DEBUG ---
-            return None
-        except Exception as e:
-             # --- DEBUG ---
-            print(f"--- User.get_by_id: UNEXPECTED ERROR finding user '{user_id}': {e} ---")
-             # --- END DEBUG ---
-            return None
+            # print(f"--- User.get_by_id: Found data: {'Yes' if user_data else 'No'} ---") # Optional Debug
+            if user_data: return User(user_data)
+        except (bson_errors.InvalidId, TypeError) as e: print(f"--- User.get_by_id: ERROR converting id '{user_id}': {e} ---"); return None
+        except Exception as e: print(f"--- User.get_by_id: UNEXPECTED ERROR finding user '{user_id}': {e} ---"); return None
         return None
-    # === End Debugging in User.get_by_id ===
 
     @staticmethod
     def create(username, email, password, role='user'):
-        if User.find_by_username(username) or User.find_by_email(email):
-            return None # User already exists
-
+        if User.find_by_username(username) or User.find_by_email(email): return None
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        user_doc = {
-            'username': username,
-            'email': email,
-            'password_hash': hashed_password,
-            'role': role,
-            'created_at': datetime.utcnow()
-        }
+        user_doc = {'username': username,'email': email,'password_hash': hashed_password,'role': role,'created_at': datetime.utcnow()}
         try:
             result = mongo.db.users.insert_one(user_doc)
-            # Return the User object wrapper for the newly created user
             return User.get_by_id(result.inserted_id)
-        except Exception as e:
-            print(f"Error creating user: {e}") # Log this properly
-            return None
+        except Exception as e: print(f"Error creating user: {e}"); return None
 
     @staticmethod
     def get_all_users():
-        # Return sorted list of user dicts
         return list(mongo.db.users.find().sort('username', 1))
 
     @staticmethod
     def set_role(user_id, role):
-         if role not in ['admin', 'user']:
-             return False
+         if role not in ['admin', 'user']: return False
          try:
-             result = mongo.db.users.update_one(
-                 {'_id': ObjectId(user_id)},
-                 {'$set': {'role': role}}
-             )
+             result = mongo.db.users.update_one({'_id': ObjectId(user_id)},{'$set': {'role': role}})
              return result.modified_count > 0
-         except (bson_errors.InvalidId, TypeError):
-             return False
-         except Exception as e:
-            print(f"Error setting user role: {e}") # Log this properly
-            return False
+         except (bson_errors.InvalidId, TypeError): return False
+         except Exception as e: print(f"Error setting user role: {e}"); return False
 
 
 # --- Project/Task Helpers ---
 
 def create_project(name, description, owner_id, status="Not Started", due_date=None):
     try:
-        project_doc = {
-            'name': name,
-            'description': description,
-            'owner_id': ObjectId(owner_id), # Ensure owner_id is stored as ObjectId
-            'status': status,
-            'due_date': due_date,
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow(),
-            'tasks': []
-        }
+        project_doc = {'name': name,'description': description,'owner_id': ObjectId(owner_id),'status': status,'due_date': due_date,'created_at': datetime.utcnow(),'updated_at': datetime.utcnow(),'tasks': []}
         result = mongo.db.projects.insert_one(project_doc)
         return str(result.inserted_id)
-    except (bson_errors.InvalidId, TypeError):
-         print(f"Error creating project: Invalid owner_id format '{owner_id}'.")
-         return None
-    except Exception as e:
-        print(f"Error creating project: {e}")
-        return None
+    except (bson_errors.InvalidId, TypeError): print(f"Error creating project: Invalid owner_id format '{owner_id}'."); return None
+    except Exception as e: print(f"Error creating project: {e}"); return None
 
 def get_project_by_id(project_id):
-    try:
-        return mongo.db.projects.find_one({'_id': ObjectId(project_id)})
-    except (bson_errors.InvalidId, TypeError):
-        return None
+    try: return mongo.db.projects.find_one({'_id': ObjectId(project_id)})
+    except (bson_errors.InvalidId, TypeError): return None
 
-# === CORRECTED FUNCTION (Removed path collision in $project) ===
 def get_projects_for_user(user_id):
-    """
-    Finds projects where the user is the owner OR is assigned to any task within the project.
-    Uses aggregation for efficiency.
-    """
-    # print(f"\n--- models.py/get_projects_for_user: Called with user_id: '{user_id}' (type: {type(user_id)}) ---") # Print input type
-
+    # print(f"\n--- models.py/get_projects_for_user: Called with user_id: '{user_id}' (type: {type(user_id)}) ---")
     try:
         user_obj_id = ObjectId(user_id)
         # print(f"--- models.py/get_projects_for_user: Converted input to user ObjectId: {user_obj_id} ---")
-
         pipeline = [
-            {
-                '$match': {
-                    '$or': [
-                        {'owner_id': user_obj_id},
-                        {'tasks.assigned_to': user_obj_id}
-                    ]
-                }
-            },
-            # $project stage to ensure all needed fields are present after matching
-            {'$project': {
-                'name': 1,
-                'owner_id': 1,
-                # 'tasks.assigned_to': 1, # <-- REMOVE THIS LINE (causes collision)
-                'created_at': 1,
-                'status': 1,
-                'description': 1,
-                'due_date': 1,
-                'tasks': 1, # <-- KEEP THIS LINE (includes the full tasks array)
-                'updated_at': 1
-                }
-            },
-            {
-                '$sort': {'created_at': -1} # Sort the results (optional)
-            }
+            {'$match': {'$or': [{'owner_id': user_obj_id},{'tasks.assigned_to': user_obj_id}]}},
+            # Removed the problematic $project stage - it was causing the error and is not strictly necessary here
+            {'$sort': {'created_at': -1}}
         ]
         # print(f"--- models.py/get_projects_for_user: Executing Aggregation Pipeline for {user_obj_id} ---")
-
         projects = list(mongo.db.projects.aggregate(pipeline))
-
         # print(f"--- models.py/get_projects_for_user: Found {len(projects)} projects for user ObjectId: {user_obj_id} via AGGREGATION ---")
-        # if projects:
-        #      print(f"--- models.py/get_projects_for_user: Aggregation Project[0] (example): {projects[0]} ---")
-
-        # --- Simple Find for Comparison (Can be removed once aggregation works) ---
-        # print(f"--- models.py/get_projects_for_user: Running simple find({'owner_id': user_obj_id}) for comparison ---")
-        # simple_find_results = list(mongo.db.projects.find({'owner_id': user_obj_id}))
-        # print(f"--- models.py/get_projects_for_user: Simple find() found {len(simple_find_results)} projects ---")
-        # if simple_find_results:
-        #     print(f"--- models.py/get_projects_for_user: Simple find() Project[0] owner_id: {simple_find_results[0].get('owner_id')} ---")
-        # --- END Simple Find ---
-
-        return projects # Return results from aggregation
-
-    except (bson_errors.InvalidId, TypeError):
-        print(f"--- models.py/get_projects_for_user: ERROR converting user_id '{user_id}' to ObjectId. ---")
-        return []
-    except Exception as e:
-        print(f"--- models.py/get_projects_for_user: ERROR during aggregation for user {user_id}: {e} ---")
-        return []
-# === END CORRECTED FUNCTION ===
+        return projects
+    except (bson_errors.InvalidId, TypeError): print(f"--- models.py/get_projects_for_user: ERROR converting user_id '{user_id}' to ObjectId. ---"); return []
+    except Exception as e: print(f"--- models.py/get_projects_for_user: ERROR during aggregation for user {user_id}: {e} ---"); return []
 
 
 def add_task_to_project(project_id, name, description, created_by_id, status="To Do", due_date=None, assigned_to_id=None):
+     # === Debugging Start ===
+     print(f"\n--- models.add_task_to_project: ENTERING FUNCTION ---")
+     print(f"--- models.add_task_to_project: Args - project_id='{project_id}', name='{name[:20]}...', created_by='{created_by_id}', assigned_to='{assigned_to_id}' ---")
+     # === End Debugging ===
      try:
-        assignee_obj_id = ObjectId(assigned_to_id) if assigned_to_id else None
+        assignee_obj_id = None
+        if assigned_to_id:
+             try:
+                 assignee_obj_id = ObjectId(assigned_to_id)
+                 # print(f"--- models.add_task_to_project: Converted assigned_to_id '{assigned_to_id}' to ObjectId: {assignee_obj_id} ---") # Optional Debug
+             except (bson_errors.InvalidId, TypeError) as e:
+                 print(f"--- models.add_task_to_project: ERROR - Invalid ObjectId format for assigned_to_id '{assigned_to_id}': {e}. Setting assignee to None. ---")
+                 assignee_obj_id = None # Create task as unassigned on error
+        # else: # Optional Debug
+             # print("--- models.add_task_to_project: assigned_to_id is None or empty. Task will be unassigned. ---")
+
+        project_obj_id = ObjectId(project_id) # Convert project ID
+        creator_obj_id = ObjectId(created_by_id) # Convert creator ID
+
         task_doc = {
-            '_id': ObjectId(),
-            'project_id_ref': ObjectId(project_id),
-            'name': name,
-            'description': description,
-            'status': status,
-            'due_date': due_date,
-            'created_by': ObjectId(created_by_id),
-            'assigned_to': assignee_obj_id,
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            '_id': ObjectId(), 'project_id_ref': project_obj_id, 'name': name, 'description': description,
+            'status': status, 'due_date': due_date, 'created_by': creator_obj_id,
+            'assigned_to': assignee_obj_id, 'created_at': datetime.utcnow(), 'updated_at': datetime.utcnow()
         }
-        result = mongo.db.projects.update_one( {'_id': ObjectId(project_id)}, {'$push': {'tasks': task_doc}} )
-        if result.modified_count > 0: return str(task_doc['_id'])
-        else: return None
-     except (bson_errors.InvalidId, TypeError):
-        print(f"Error adding task: Invalid ObjectId format for project '{project_id}', creator '{created_by_id}', or assignee '{assigned_to_id}'.")
+        # print(f"--- models.add_task_to_project: Task document prepared: {task_doc} ---") # Optional Debug
+
+        # print(f"--- models.add_task_to_project: Attempting $push to project ObjectId('{project_obj_id}') ---") # Optional Debug
+        update_result = None
+        try:
+            update_result = mongo.db.projects.update_one( {'_id': project_obj_id}, {'$push': {'tasks': task_doc}} )
+            # print(f"--- models.add_task_to_project: update_one result: matched_count={update_result.matched_count}, modified_count={update_result.modified_count} ---") # Optional Debug
+        except Exception as db_error:
+            print(f"--- models.add_task_to_project: DATABASE ERROR during update_one: {db_error} ---")
+            return None
+
+        if update_result and update_result.modified_count > 0:
+            print(f"--- models.add_task_to_project: SUCCESS - Returning task ID: {task_doc['_id']} ---")
+            return str(task_doc['_id'])
+        else:
+            print(f"--- models.add_task_to_project: FAILED - Project not found or not modified (modified_count=0). Returning None. ---")
+            return None
+     except (bson_errors.InvalidId, TypeError) as id_error:
+        print(f"--- models.add_task_to_project: ERROR - Invalid ObjectId format for project_id '{project_id}' or created_by_id '{created_by_id}': {id_error}. Returning None. ---")
         return None
      except Exception as e:
-        print(f"Error adding task: {e}")
+        print(f"--- models.add_task_to_project: UNEXPECTED ERROR: {e}. Returning None. ---")
         return None
 
 def get_task_from_project(project_id, task_id):
@@ -268,13 +191,11 @@ def delete_project(project_id):
     except (bson_errors.InvalidId, TypeError): return False
     except Exception as e: print(f"Error deleting project: {e}"); return False
 
-# --- HELPER: Get user dictionary ---
 def get_user_dict():
     users = User.get_all_users()
     if users: return {str(user['_id']): user.get('username', 'Unknown') for user in users}
     return {}
 
-# --- Update Task Function ---
 def update_task_in_project(project_id, task_id, update_data):
     set_update = {f'tasks.$.{key}': value for key, value in update_data.items()}
     set_update['tasks.$.updated_at'] = datetime.utcnow()

@@ -4,17 +4,11 @@ from flask_login import login_required, current_user
 from . import bp
 from ..models import (
     create_project, get_project_by_id, get_projects_for_user,
-    add_task_to_project, get_task_from_project, update_task_status_in_project,
+    add_task_to_project, get_task_from_project, update_task_status_in_project, # Ensure add_task_to_project is imported
     delete_task_from_project, delete_project,
-    # --- Add User model and helper ---
-    User,
-    get_user_dict,
-    update_task_in_project # Import update function
-    # --- End Add ---
+    User, get_user_dict, update_task_in_project
 )
-# === Import admin_required decorator ===
 from ..decorators import project_owner_required, project_access_required, admin_required
-# === END Import ===
 from datetime import datetime
 from bson import ObjectId, errors as bson_errors
 
@@ -24,14 +18,11 @@ from bson import ObjectId, errors as bson_errors
 @login_required
 def project_list():
     """Displays list of projects user has access to."""
-    print(f"\n--- projects.project_list: ENTERING ROUTE ---") # Debug start
-    # --- DEBUG PRINT ---
+    # print(f"\n--- projects.project_list: ENTERING ROUTE ---") # Debug start (Can be commented out later)
     current_user_id = current_user.id
-    print(f"--- projects.project_list: current_user.id = '{current_user_id}', type = {type(current_user_id)} ---")
-    # --- END DEBUG PRINT ---
-    # Uses the updated get_projects_for_user model function
+    # print(f"--- projects.project_list: current_user.id = '{current_user_id}', type = {type(current_user_id)} ---")
     projects = get_projects_for_user(current_user_id) # Pass the ID
-    print(f"--- projects.project_list: EXITING ROUTE (Rendering template with {len(projects)} projects) ---") # Debug end
+    # print(f"--- projects.project_list: EXITING ROUTE (Rendering template with {len(projects)} projects) ---") # Debug end
     return render_template('projects/project_list.html', title='My Projects', projects=projects)
 
 # Only admins can create projects
@@ -93,26 +84,19 @@ def edit_project(project_id):
     project = get_project_by_id(project_id)
     if not project: abort(404)
 
-    # Determine if the current user is the owner (needed for logic below)
     is_owner = str(project.get('owner_id')) == current_user.id
 
     if request.method == 'POST':
-        # Get submitted data
         submitted_status = request.form.get('status')
-        submitted_name = request.form.get('name')             # Get even if disabled, to prevent errors
-        submitted_description = request.form.get('description', '') # Get even if disabled
-        submitted_due_date_str = request.form.get('due_date') # Get even if disabled
-
-        # Preserve submitted values for re-rendering on error
+        submitted_name = request.form.get('name')
+        submitted_description = request.form.get('description', '')
+        submitted_due_date_str = request.form.get('due_date')
         form_data = {'name': submitted_name, 'description': submitted_description, 'status': submitted_status, 'due_date': submitted_due_date_str}
 
-        # --- Permission Check for Update ---
         if current_user.is_admin or is_owner:
-            # Admins and Owners can update all fields
-            if not submitted_name: # Only validate name if owner/admin
+            if not submitted_name:
                 flash('Project name is required for owners/admins.', 'danger')
                 return render_template('projects/project_form.html', title='Edit Project', project=project, **form_data)
-
             due_date = None
             if submitted_due_date_str:
                 try:
@@ -120,59 +104,25 @@ def edit_project(project_id):
                 except ValueError:
                     flash('Invalid date format. Use YYYY-MM-DD.', 'danger')
                     return render_template('projects/project_form.html', title='Edit Project', project=project, **form_data)
-
-            # Prepare full update payload for admin/owner
-            update_data = {
-                'name': submitted_name,
-                'description': submitted_description,
-                'status': submitted_status,
-                'due_date': due_date,
-                'updated_at': datetime.utcnow()
-            }
+            update_data = { 'name': submitted_name, 'description': submitted_description, 'status': submitted_status, 'due_date': due_date, 'updated_at': datetime.utcnow() }
         else:
-            # Regular assigned users can ONLY update status
-            update_data = {
-                'status': submitted_status,
-                'updated_at': datetime.utcnow()
-            }
-            # Don't flash info message on every status update
-            # flash('Permission granted to update status only.', 'info')
+            update_data = { 'status': submitted_status, 'updated_at': datetime.utcnow() }
 
-        # --- Perform Update ---
         try:
             from ..extensions import mongo
-            result = mongo.db.projects.update_one(
-                {'_id': ObjectId(project_id)},
-                {'$set': update_data}
-            )
+            result = mongo.db.projects.update_one( {'_id': ObjectId(project_id)}, {'$set': update_data} )
             if result.matched_count:
-                 if result.modified_count > 0:
-                      flash('Project updated successfully!', 'success')
-                 else:
-                      flash('No changes detected in project details.', 'info')
-            else:
-                 flash('Project not found during update.', 'warning')
-
+                 if result.modified_count > 0: flash('Project updated successfully!', 'success')
+                 else: flash('No changes detected in project details.', 'info')
+            else: flash('Project not found during update.', 'warning')
             return redirect(url_for('projects.project_detail', project_id=project_id))
-
-        except bson_errors.InvalidId:
-             abort(404)
+        except bson_errors.InvalidId: abort(404)
         except Exception as e:
              flash(f'Error updating project: {e}', 'danger')
-             # Re-render form
              return render_template('projects/project_form.html', title='Edit Project', project=project, **form_data)
 
-
-    # --- GET Request ---
-    # Pre-fill form with existing project data
     due_date_val = project.get('due_date').strftime('%Y-%m-%d') if project.get('due_date') else ''
-    return render_template('projects/project_form.html',
-                           title='Edit Project',
-                           project=project, # Pass project object for checks in template
-                           name=project.get('name'),
-                           description=project.get('description'),
-                           status=project.get('status'),
-                           due_date=due_date_val)
+    return render_template('projects/project_form.html', title='Edit Project', project=project, name=project.get('name'), description=project.get('description'), status=project.get('status'), due_date=due_date_val)
 
 
 # Only Admin or Owner should delete project
@@ -190,44 +140,84 @@ def delete_project_route(project_id):
 
 # --- Task Routes ---
 
-# Only Admin or Owner should add tasks
+# Only Admin or Owner should add tasks (as per current rules)
 @bp.route('/<project_id>/tasks/new', methods=['GET', 'POST'])
 @login_required
 @project_owner_required
 def new_task(project_id):
+    # === Debugging Start ===
+    print(f"\n--- projects.new_task: ENTERING ROUTE for project_id: {project_id}, Method: {request.method} ---")
+    # === End Debugging ===
     project = get_project_by_id(project_id)
-    if not project: abort(404)
+    if not project:
+        print(f"--- projects.new_task: ERROR - Project not found for ID: {project_id} ---")
+        abort(404)
+
     users_list = User.get_all_users()
+    # print(f"--- projects.new_task: Fetched {len(users_list)} users for dropdown ---") # Optional Debug
+
     if request.method == 'POST':
+        print("--- projects.new_task: Processing POST request ---")
         name = request.form.get('name')
         description = request.form.get('description', '')
         due_date_str = request.form.get('due_date')
-        assigned_to_user_id = request.form.get('assigned_to')
-        form_data = {'name': name,'description': description,'due_date': due_date_str,'assigned_to_id': assigned_to_user_id}
+        assigned_to_user_id = request.form.get('assigned_to') # String ID or ""
+
+        # --- DEBUG: Print received form data ---
+        print(f"--- projects.new_task POST Data: name='{name}', description='{description[:20]}...', due_date='{due_date_str}', assigned_to='{assigned_to_user_id}' ---")
+        # --- END DEBUG ---
+
+        form_data = { 'name': name, 'description': description, 'due_date': due_date_str, 'assigned_to_id': assigned_to_user_id }
+
         if not name:
             flash('Task name is required.', 'danger')
+            print("--- projects.new_task: ERROR - Task name missing ---")
             return render_template('tasks/task_form.html', title='New Task', project=project, users=users_list, task=None, **form_data)
         else:
             due_date = None
             if due_date_str:
-                try: due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
+                try:
+                    due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
+                    # print(f"--- projects.new_task: Parsed due_date: {due_date} ---") # Optional Debug
                 except ValueError:
                     flash('Invalid date format. Use YYYY-MM-DD.', 'danger')
+                    print(f"--- projects.new_task: ERROR - Invalid date format: {due_date_str} ---")
                     return render_template('tasks/task_form.html', title='New Task', project=project, users=users_list, task=None, **form_data)
-            task_id = add_task_to_project(project_id, name, description, current_user.id, due_date=due_date, assigned_to_id=assigned_to_user_id if assigned_to_user_id else None)
+
+            # --- DEBUG: Print data being sent to model function ---
+            creator_id = current_user.id
+            assignee_id_to_pass = assigned_to_user_id if assigned_to_user_id else None
+            print(f"--- projects.new_task: Calling add_task_to_project with: project_id='{project_id}', name='{name}', ..., created_by_id='{creator_id}', assigned_to_id='{assignee_id_to_pass}' ---")
+            # --- END DEBUG ---
+
+            task_id = add_task_to_project(
+                project_id, name, description, creator_id,
+                due_date=due_date,
+                assigned_to_id=assignee_id_to_pass
+            )
+
+            # --- DEBUG: Print result from model function ---
+            print(f"--- projects.new_task: add_task_to_project returned: {task_id} ---")
+            # --- END DEBUG ---
+
             if task_id:
                 flash('Task added successfully!', 'success')
+                print("--- projects.new_task: SUCCESS - Redirecting to project detail ---")
                 return redirect(url_for('projects.project_detail', project_id=project_id))
             else:
-                flash('Error adding task.', 'danger')
+                flash('Error adding task. Please check input or contact support.', 'danger')
+                print("--- projects.new_task: ERROR - add_task_to_project failed (returned None) ---")
                 return render_template('tasks/task_form.html', title='New Task', project=project, users=users_list, task=None, **form_data)
+
+    # GET Request
+    # print("--- projects.new_task: Processing GET request (Rendering form) ---") # Optional Debug
     return render_template('tasks/task_form.html', title='New Task', project=project, users=users_list, task=None)
 
 
-# Only Admin or Owner should edit tasks
+# Only Admin or Owner should edit tasks (as per current rules)
 @bp.route('/<project_id>/tasks/<task_id>/edit', methods=['GET', 'POST'])
 @login_required
-@project_owner_required # Or adjust permissions
+@project_owner_required
 def edit_task(project_id, task_id):
     project = get_project_by_id(project_id)
     if not project: abort(404)
@@ -278,7 +268,7 @@ def update_task_status_route(project_id, task_id):
     return redirect(url_for('projects.project_detail', project_id=project_id, _anchor=f'task-{task_id}'))
 
 
-# Only Admin or Owner should delete tasks
+# Only Admin or Owner should delete tasks (as per current rules)
 @bp.route('/<project_id>/tasks/<task_id>/delete', methods=['POST'])
 @login_required
 @project_owner_required
