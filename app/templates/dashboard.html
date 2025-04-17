@@ -10,7 +10,11 @@
         <div class="card card-pandora">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>My Projects</span>
+                {# === HIDE BUTTON FOR NON-ADMINS === #}
+                {% if current_user.is_admin %}
                 <a href="{{ url_for('projects.new_project') }}" class="btn btn-sm btn-pandora-secondary">New Project</a>
+                {% endif %}
+                 {# === END HIDE === #}
             </div>
             <div class="card-body">
                 {% if projects %}
@@ -27,14 +31,18 @@
                     {% endif %}
                 {% else %}
                     <p>No active projects found. Time to start exploring!</p>
+                    {# === HIDE BUTTON FOR NON-ADMINS === #}
+                    {% if current_user.is_admin %}
                     <a href="{{ url_for('projects.new_project') }}" class="btn btn-pandora mt-3">Create First Project</a>
+                    {% endif %}
+                     {# === END HIDE === #}
                 {% endif %}
             </div>
         </div>
     </div>
     <div class="col-md-5">
          <div class="card card-pandora">
-            <div class="card-header">Upcoming Tasks</div>
+            <div class="card-header">My Upcoming Tasks</div> {# Changed Header #}
             <div class="card-body">
                 {% if tasks %}
                      <ul class="list-group list-group-flush">
@@ -43,13 +51,11 @@
                         {% endfor %}
                      </ul>
                 {% else %}
-                     <p>No upcoming tasks. Enjoy the tranquility (for now)!</p>
+                     <p>No upcoming tasks assigned to you. Enjoy the tranquility!</p> {# Changed Text #}
                 {% endif %}
                  {# Add link to view all tasks page if created #}
-                 {# <a href="#" class="btn btn-sm btn-pandora-secondary mt-3">View My Tasks</a> #}
             </div>
         </div>
-        {# Add more dashboard widgets: Activity Feed, Stats, etc. #}
     </div>
 </div>
 {% endblock %}

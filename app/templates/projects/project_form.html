@@ -4,8 +4,14 @@
 <h2>{{ 'Edit Project' if project else 'Create New Project' }}</h2>
 <hr class="mb-4">
 
-{# Determine action URL based on whether editing or creating #}
+{# Determine action URL #}
 {% set action_url = url_for('projects.edit_project', project_id=project._id) if project else url_for('projects.new_project') %}
+
+{# === Determine if fields should be disabled === #}
+{% set is_owner = project and current_user.id == project.owner_id|string %}
+{% set fields_disabled = project and not current_user.is_admin and not is_owner %}
+{# === END Determine === #}
+
 
 <form method="POST" action="{{ action_url }}">
     {# Add CSRF token if using Flask-WTF #}
@@ -13,18 +19,24 @@
         <div class="col-md-8">
             <div class="mb-3">
                 <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="name" name="name" required value="{{ name or project.name or '' }}">
+                {# Add disabled attribute conditionally #}
+                <input type="text" class="form-control" id="name" name="name" required
+                       value="{{ name or (project.name if project else '') }}"
+                       {% if fields_disabled %}disabled title="Only Admin or Owner can edit Name"{% endif %}>
             </div>
              <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="5">{{ description or project.description or '' }}</textarea>
+                 {# Add disabled attribute conditionally #}
+                <textarea class="form-control" id="description" name="description" rows="5"
+                          {% if fields_disabled %}disabled title="Only Admin or Owner can edit Description"{% endif %}>{{ description or (project.description if project else '') }}</textarea>
             </div>
         </div>
         <div class="col-md-4">
              <div class="mb-3">
                 <label for="status" class="form-label">Status</label>
+                {# Status is ALWAYS editable by anyone who can access this page #}
                 <select class="form-select" id="status" name="status">
-                    {% set current_status = status or project.status or 'Not Started' %}
+                    {% set current_status = status or (project.status if project else 'Not Started') %}
                     <option value="Not Started" {% if current_status == 'Not Started' %}selected{% endif %}>Not Started</option>
                     <option value="In Progress" {% if current_status == 'In Progress' %}selected{% endif %}>In Progress</option>
                     <option value="On Hold" {% if current_status == 'On Hold' %}selected{% endif %}>On Hold</option>
@@ -34,7 +46,10 @@
             </div>
              <div class="mb-3">
                 <label for="due_date" class="form-label">Due Date</label>
-                <input type="date" class="form-control" id="due_date" name="due_date" value="{{ due_date or '' }}">
+                 {# Add disabled attribute conditionally #}
+                <input type="date" class="form-control" id="due_date" name="due_date"
+                       value="{{ due_date or '' }}"
+                       {% if fields_disabled %}disabled title="Only Admin or Owner can edit Due Date"{% endif %}>
             </div>
         </div>
     </div>
@@ -44,5 +59,8 @@
         <button type="submit" class="btn btn-pandora">{{ 'Save Changes' if project else 'Create Project' }}</button>
         <a href="{{ url_for('projects.project_detail', project_id=project._id) if project else url_for('projects.project_list') }}" class="btn btn-pandora-secondary">Cancel</a>
     </div>
+    {% if fields_disabled %}
+        <p class="mt-3 text-warning"><small>Note: As an assigned user, you can only update the project status.</small></p>
+    {% endif %}
 </form>
 {% endblock %}
