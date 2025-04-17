@@ -79,6 +79,7 @@ class User(UserMixin):
 
     @staticmethod
     def get_all_users():
+        # Return sorted list of user dicts (or User objects if preferred)
         return list(mongo.db.users.find().sort('username', 1))
 
     @staticmethod
@@ -109,6 +110,7 @@ def create_project(name, description, owner_id, status="Not Started", due_date=N
             'status': status,
             'due_date': due_date, # Store as datetime object
             'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow(), # Add updated_at on creation
             'tasks': [] # Embed tasks
         }
         result = mongo.db.projects.insert_one(project_doc)
@@ -134,7 +136,7 @@ def get_projects_for_user(user_id):
         return []
 
 
-def add_task_to_project(project_id, name, description, created_by_id, status="To Do", due_date=None, assigned_to_id=None):
+def add_task_to_project(project_id, name, description, created_by_id, status="To Do", due_date=None, assigned_to_id=None): # Added assigned_to_id parameter
      try:
         task_doc = {
             '_id': ObjectId(), # Generate ID for the embedded task
@@ -144,8 +146,10 @@ def add_task_to_project(project_id, name, description, created_by_id, status="To
             'status': status,
             'due_date': due_date, # Store as datetime object
             'created_by': ObjectId(created_by_id),
+            # Store assigned_to as ObjectId if provided, else store None
             'assigned_to': ObjectId(assigned_to_id) if assigned_to_id else None,
-            'created_at': datetime.utcnow()
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow() # Add updated_at timestamp
         }
         result = mongo.db.projects.update_one(
             {'_id': ObjectId(project_id)},
@@ -156,6 +160,7 @@ def add_task_to_project(project_id, name, description, created_by_id, status="To
         else:
             return None # Project not found or not modified
      except (bson_errors.InvalidId, TypeError):
+        print(f"Error adding task: Invalid ObjectId format for project '{project_id}' or user/assignee ID '{assigned_to_id}'.")
         return None
      except Exception as e:
         print(f"Error adding task: {e}")
@@ -212,4 +217,43 @@ def delete_project(project_id):
         print(f"Error deleting project: {e}")
         return False
 
-# Add functions for updating project details etc. as needed
+# --- NEW HELPER: Get user dictionary ---
+def get_user_dict():
+    """Returns a dictionary mapping user IDs (str) to usernames."""
+    users = User.get_all_users() # Fetches list of user dicts
+    if users:
+        return {str(user['_id']): user.get('username', 'Unknown') for user in users}
+    return {}
+
+
+# --- Update Task Function (Example if implementing edit task) ---
+def update_task_in_project(project_id, task_id, update_data):
+    """Updates fields of an embedded task."""
+    # Construct the $set update document prefixing fields with 'tasks.$.'
+    set_update = {f'tasks.$.{key}': value for key, value in update_data.items()}
+    # Always update the 'updated_at' field for the task
+    set_update['tasks.$.updated_at'] = datetime.utcnow()
+
+    # Convert assigned_to ID string back to ObjectId if present
+    if 'assigned_to' in set_update:
+        if set_update['tasks.$.assigned_to']:
+             try:
+                 set_update['tasks.$.assigned_to'] = ObjectId(set_update['tasks.$.assigned_to'])
+             except (bson_errors.InvalidId, TypeError):
+                 print("Error updating task: Invalid assigned_to ID format.")
+                 return False # Or handle error differently
+        else:
+            set_update['tasks.$.assigned_to'] = None # Set to null if empty string selected
+
+    try:
+        result = mongo.db.projects.update_one(
+            {'_id': ObjectId(project_id), 'tasks._id': ObjectId(task_id)},
+            {'$set': set_update}
+        )
+        return result.modified_count > 0
+    except (bson_errors.InvalidId, TypeError):
+        print("Error updating task: Invalid project or task ID format.")
+        return False
+    except Exception as e:
+        print(f"Error updating task details: {e}")
+        return False
