@@ -1,7 +1,7 @@
 # pandora_pm/config.py
 import os
 from dotenv import load_dotenv
-from urllib.parse import quote_plus # Still needed for username
+from urllib.parse import quote_plus # Required for encoding
 
 # Load environment variables from .env file
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -26,11 +26,11 @@ mongo_uri = "mongodb://"
 
 # Add credentials if both user and password are provided
 if MONGO_USER and MONGO_PASSWORD:
-    # URL-encode username to handle special characters safely
+    # *** Encode BOTH username and password using quote_plus ***
+    # This is the recommended way by PyMongo to handle special characters.
     encoded_user = quote_plus(MONGO_USER)
-    # *** Use the password directly from .env, assuming it's correctly formatted/encoded ***
-    password_part = MONGO_PASSWORD
-    mongo_uri += f"{encoded_user}:{password_part}@" # Use password_part directly
+    encoded_password = quote_plus(MONGO_PASSWORD)
+    mongo_uri += f"{encoded_user}:{encoded_password}@"
 
 # Add host and port
 mongo_uri += f"{MONGO_HOST}:{MONGO_PORT}/"
