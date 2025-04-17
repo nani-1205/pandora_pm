@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>500 - Internal Server Error</h1>
+    <p>An unexpected error occurred on the server.</p>
+    <p>The connection to Eywa may be unstable. Please try again later.</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-pandora">Return to Dashboard</a>
+{% endblock %}

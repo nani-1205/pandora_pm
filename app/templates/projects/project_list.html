@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Projects</h1>
+    <a href="{{ url_for('projects.new_project') }}" class="btn btn-pandora">Create New Project</a>
+</div>
+
+{% if projects %}
+    <div class="row">
+        {% for project in projects %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card card-pandora h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                     <a href="{{ url_for('projects.project_detail', project_id=project._id) }}" class="stretched-link text-decoration-none h5 mb-0" style="color: inherit;">{{ project.name }}</a>
+                      <span class="badge rounded-pill status-{{ project.status|lower|replace(' ', '') }}">{{ project.status }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted small">
+                        Created: {{ project.created_at.strftime('%Y-%m-%d') }}
+                        {% if project.due_date %}
+                         | Due: {{ project.due_date.strftime('%Y-%m-%d') }}
+                        {% endif %}
+                    </p>
+                    <p class="card-text">{{ project.description | truncate(100) }}</p>
+                    {# Add task count or progress later #}
+                </div>
+                <div class="card-footer bg-transparent border-top-0 text-end">
+                     <a href="{{ url_for('projects.project_detail', project_id=project._id) }}" class="btn btn-sm btn-pandora-secondary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center mt-5">
+        <p>You haven't started any projects yet. Ready to explore?</p>
+        <a href="{{ url_for('projects.new_project') }}" class="btn btn-lg btn-pandora">Create Your First Project</a>
+    </div>
+{% endif %}
+{% endblock %}

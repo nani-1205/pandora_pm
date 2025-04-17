@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>403 - Forbidden</h1>
+    <p>You do not have permission to access this resource.</p>
+    <p>The spirits of Eywa guard this path.</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-pandora">Return to Dashboard</a>
+{% endblock %}

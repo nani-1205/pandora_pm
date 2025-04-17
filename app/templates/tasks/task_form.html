@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ 'Edit Task' if task else 'Add New Task' }}</h2>
+<h4 class="text-muted mb-4">Project: <a href="{{ url_for('projects.project_detail', project_id=project._id) }}">{{ project.name }}</a></h4>
+<hr class="mb-4">
+
+{# Determine action URL #}
+{% set action_url = url_for('projects.edit_task', project_id=project._id, task_id=task._id) if task else url_for('projects.new_task', project_id=project._id) %}
+
+ <form method="POST" action="{{ action_url }}">
+    {# CSRF Token if using WTForms #}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                <label for="name" class="form-label">Task Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" required value="{{ name or task.name or '' }}">
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="5">{{ description or task.description or '' }}</textarea>
+            </div>
+        </div>
+         <div class="col-md-4">
+             {# Add Status dropdown if needed for editing #}
+              {# <div class="mb-3">
+                 <label for="status" class="form-label">Status</label>
+                 <select class="form-select" id="status" name="status"> ... options ... </select>
+             </div> #}
+
+             <div class="mb-3">
+                <label for="due_date" class="form-label">Due Date</label>
+                 {% set current_due_date = due_date or (task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '') %}
+                <input type="date" class="form-control" id="due_date" name="due_date" value="{{ current_due_date }}">
+            </div>
+
+             {# Add Assignee Dropdown if implemented #}
+             {# <div class="mb-3">
+                 <label for="assigned_to" class="form-label">Assign To</label>
+                 <select class="form-select" id="assigned_to" name="assigned_to">
+                     <option value="">-- Unassigned --</option>
+                     # Loop through available users #
+                 </select>
+             </div> #}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-pandora">{{ 'Save Changes' if task else 'Add Task' }}</button>
+        <a href="{{ url_for('projects.project_detail', project_id=project._id) }}" class="btn btn-pandora-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

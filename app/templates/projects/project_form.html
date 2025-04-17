@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ 'Edit Project' if project else 'Create New Project' }}</h2>
+<hr class="mb-4">
+
+{# Determine action URL based on whether editing or creating #}
+{% set action_url = url_for('projects.edit_project', project_id=project._id) if project else url_for('projects.new_project') %}
+
+<form method="POST" action="{{ action_url }}">
+    {# Add CSRF token if using Flask-WTF #}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" required value="{{ name or project.name or '' }}">
+            </div>
+             <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="5">{{ description or project.description or '' }}</textarea>
+            </div>
+        </div>
+        <div class="col-md-4">
+             <div class="mb-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    {% set current_status = status or project.status or 'Not Started' %}
+                    <option value="Not Started" {% if current_status == 'Not Started' %}selected{% endif %}>Not Started</option>
+                    <option value="In Progress" {% if current_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                    <option value="On Hold" {% if current_status == 'On Hold' %}selected{% endif %}>On Hold</option>
+                    <option value="Completed" {% if current_status == 'Completed' %}selected{% endif %}>Completed</option>
+                    <option value="Cancelled" {% if current_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+             <div class="mb-3">
+                <label for="due_date" class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="due_date" name="due_date" value="{{ due_date or '' }}">
+            </div>
+        </div>
+    </div>
+
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-pandora">{{ 'Save Changes' if project else 'Create Project' }}</button>
+        <a href="{{ url_for('projects.project_detail', project_id=project._id) if project else url_for('projects.project_list') }}" class="btn btn-pandora-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

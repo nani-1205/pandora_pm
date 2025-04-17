@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>Login to Pandora PM</h2>
+        <hr class="mb-4">
+        <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+            {# Add CSRF token here if using Flask-WTF #}
+             <div class="mb-3">
+                 <label for="username" class="form-label">Username</label>
+                 <input type="text" class="form-control" id="username" name="username" required value="{{ request.form.username or '' }}">
+             </div>
+             <div class="mb-3">
+                 <label for="password" class="form-label">Password</label>
+                 <input type="password" class="form-control" id="password" name="password" required>
+             </div>
+             <div class="mb-3 form-check">
+                 <input type="checkbox" class="form-check-input" id="remember" name="remember" value="1">
+                 <label class="form-check-label" for="remember">Remember Me</label>
+             </div>
+             <button type="submit" class="btn btn-pandora w-100">Enter Pandora</button>
+        </form>
+        <p class="mt-4 text-center">
+            New to this world? <a href="{{ url_for('auth.register') }}">Register here</a>
+        </p>
+        {# Add forgot password link later #}
+    </div>
+</div>
+{% endblock %}

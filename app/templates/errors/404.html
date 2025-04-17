@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>404 - Not Found</h1>
+    <p>The page you are looking for does not seem to exist in this part of Pandora.</p>
+    <p>Perhaps you took a wrong turn?</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-pandora">Return to Dashboard</a>
+{% endblock %}
