@@ -17,45 +17,48 @@ def index():
 @bp.route('/dashboard')
 @login_required
 def dashboard():
+    print(f"\n--- main.dashboard: ENTERING ROUTE ---") # Debug start
     try:
-        # Fetch projects user has access to (using the updated model function)
-        user_projects = get_projects_for_user(current_user.id)
+        # --- DEBUG PRINT ---
+        current_user_id = current_user.id
+        print(f"--- main.dashboard: current_user.id = '{current_user_id}', type = {type(current_user_id)} ---")
+        # --- END DEBUG PRINT ---
 
-        # === MODIFIED PIPELINE FOR UPCOMING TASKS ===
-        # Fetch tasks ASSIGNED to the current user across projects they have access to
+        # Fetch projects user has access to
+        user_projects = get_projects_for_user(current_user_id) # Pass the ID
+
+        # Fetch upcoming tasks assigned to the user
         pipeline = [
-            # Match documents where the tasks array contains at least one task assigned to the user
-            # This first match isn't strictly necessary anymore if get_projects_for_user works,
-            # but helps narrow down initial documents if needed. Can be removed for simplicity.
-            # {'$match': {'tasks.assigned_to': ObjectId(current_user.id)}},
-            {'$unwind': '$tasks'}, # Deconstruct the tasks array
-            # Now filter specifically for tasks assigned to the current user AND not done
+            {'$unwind': '$tasks'}, # Deconstruct the tasks array first
             {'$match': {
-                'tasks.assigned_to': ObjectId(current_user.id),
+                'tasks.assigned_to': ObjectId(current_user_id), # Match tasks assigned to user
                 'tasks.status': {'$ne': 'Done'} # Filter out completed tasks
             }},
-            {'$sort': {'tasks.due_date': 1, 'tasks.created_at': -1}}, # Sort by due date, then creation
-            {'$limit': 10}, # Limit to 10 tasks for the dashboard
-            {'$project': { # Reshape the output
-                '_id': 0, # Exclude the default project _id
-                'project_id': '$_id', # Use the root document's _id as project_id
-                'project_name': '$name', # Get project name from root document
+            {'$sort': {'tasks.due_date': 1, 'tasks.created_at': -1}},
+            {'$limit': 10},
+            {'$project': {
+                '_id': 0,
+                'project_id': '$_id',
+                'project_name': '$name',
                 'task_id': '$tasks._id',
                 'task_name': '$tasks.name',
                 'task_status': '$tasks.status',
                 'task_due_date': '$tasks.due_date'
             }}
         ]
+        print(f"--- main.dashboard: Fetching upcoming tasks for user ObjectId: {ObjectId(current_user_id)} ---")
         upcoming_tasks = list(mongo.db.projects.aggregate(pipeline))
-        # === END MODIFIED PIPELINE ===
+        print(f"--- main.dashboard: Found {len(upcoming_tasks)} upcoming tasks ---")
+
 
     except Exception as e:
         flash('Error loading dashboard data.', 'danger')
-        print(f"Dashboard Error: {e}") # Log this properly in production
+        print(f"--- main.dashboard: ERROR loading data: {e} ---")
         user_projects = []
         upcoming_tasks = []
 
+    print(f"--- main.dashboard: EXITING ROUTE (Rendering template with {len(user_projects)} projects) ---") # Debug end
     return render_template('dashboard.html',
                            title='Dashboard',
-                           projects=user_projects, # List of projects user owns or is assigned to
-                           tasks=upcoming_tasks) # List of tasks assigned to user
+                           projects=user_projects,
+                           tasks=upcoming_tasks)

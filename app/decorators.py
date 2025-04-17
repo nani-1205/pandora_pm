@@ -1,6 +1,6 @@
 # pandora_pm/app/decorators.py
 from functools import wraps
-from flask import abort
+from flask import abort, redirect, url_for, request, flash # Added imports for potential redirect
 from flask_login import current_user
 # --- Import necessary functions/objects ---
 from .models import get_project_by_id
@@ -12,7 +12,8 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         # Ensure user is authenticated before checking admin status
         if not current_user.is_authenticated:
-             abort(403) # Or redirect to login: return redirect(url_for('auth.login', next=request.url))
+             flash('Please log in to access this page.', 'info')
+             return redirect(url_for('auth.login', next=request.url))
         if not current_user.is_admin:
             abort(403) # Forbidden
         return f(*args, **kwargs)
@@ -22,7 +23,9 @@ def admin_required(f):
 def project_owner_required(f):
      @wraps(f)
      def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated: abort(403)
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'info')
+            return redirect(url_for('auth.login', next=request.url))
 
         project_id = kwargs.get('project_id')
         if not project_id: abort(500) # Internal error if project_id missing
@@ -39,16 +42,14 @@ def project_owner_required(f):
         return f(*args, **kwargs)
      return decorated_function
 
-# --- NEW ACCESS DECORATOR ---
+# --- ACCESS DECORATOR ---
 def project_access_required(f):
     """Allows access if user is admin, owner, or assigned to any task in the project."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
-            # Redirecting might be better than just aborting here
-            # flash('Please log in to access this page.', 'info')
-            # return redirect(url_for('auth.login', next=request.url))
-            abort(403) # Must be logged in
+            flash('Please log in to access this page.', 'info')
+            return redirect(url_for('auth.login', next=request.url)) # Redirect is often better
 
         project_id = kwargs.get('project_id')
         if not project_id: abort(500) # Internal error
@@ -68,7 +69,8 @@ def project_access_required(f):
             tasks = project.get('tasks', [])
             if tasks: # Only check if there are tasks
                 for task in tasks:
-                    if task.get('assigned_to') == user_obj_id:
+                    # Safe check if assigned_to is None or not ObjectId
+                    if isinstance(task.get('assigned_to'), ObjectId) and task.get('assigned_to') == user_obj_id:
                         is_assigned = True
                         break # Found one assignment, no need to check further
         except (bson_errors.InvalidId, TypeError):
@@ -85,4 +87,4 @@ def project_access_required(f):
         # kwargs['project'] = project
         return f(*args, **kwargs)
     return decorated_function
-# --- END NEW ACCESS DECORATOR ---
+# --- END ACCESS DECORATOR ---

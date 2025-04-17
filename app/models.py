@@ -48,16 +48,35 @@ class User(UserMixin):
     def find_by_email(email):
         return mongo.db.users.find_one({'email': email})
 
+    # === Add Debugging to User.get_by_id ===
     @staticmethod
     def get_by_id(user_id):
+        # --- DEBUG ---
+        print(f"--- User.get_by_id: Attempting to find user with raw id: '{user_id}' (type: {type(user_id)}) ---")
+        # --- END DEBUG ---
         try:
-            # Ensure we search using ObjectId
-            user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+            user_obj_id = ObjectId(user_id)
+             # --- DEBUG ---
+            print(f"--- User.get_by_id: Converted id to ObjectId: {user_obj_id} ---")
+             # --- END DEBUG ---
+            user_data = mongo.db.users.find_one({'_id': user_obj_id})
+            # --- DEBUG ---
+            print(f"--- User.get_by_id: Found user data: {'Yes' if user_data else 'No'} ---")
+            # --- END DEBUG ---
             if user_data:
-                return User(user_data) # Return User object wrapper
-        except (bson_errors.InvalidId, TypeError): # Handle invalid ObjectId format or None
+                return User(user_data)
+        except (bson_errors.InvalidId, TypeError) as e:
+            # --- DEBUG ---
+            print(f"--- User.get_by_id: ERROR converting id '{user_id}' to ObjectId: {e} ---")
+            # --- END DEBUG ---
+            return None
+        except Exception as e:
+             # --- DEBUG ---
+            print(f"--- User.get_by_id: UNEXPECTED ERROR finding user '{user_id}': {e} ---")
+             # --- END DEBUG ---
             return None
         return None
+    # === End Debugging in User.get_by_id ===
 
     @staticmethod
     def create(username, email, password, role='user'):
@@ -131,19 +150,18 @@ def get_project_by_id(project_id):
     except (bson_errors.InvalidId, TypeError):
         return None
 
-# === VERIFIED/CORRECTED FUNCTION ===
+# === VERIFIED/CORRECTED FUNCTION with extra debugging ===
 def get_projects_for_user(user_id):
     """
     Finds projects where the user is the owner OR is assigned to any task within the project.
     Uses aggregation for efficiency.
     """
+    print(f"\n--- models.py/get_projects_for_user: Called with user_id: '{user_id}' (type: {type(user_id)}) ---") # Print input type
+
     try:
         # --- CRITICAL: Ensure user_id is converted to ObjectId for comparison ---
         user_obj_id = ObjectId(user_id)
-        # --- END CRITICAL ---
-
-        # Add print statement for debugging
-        print(f"--- models.py/get_projects_for_user: Fetching projects for user ObjectId: {user_obj_id} ---")
+        print(f"--- models.py/get_projects_for_user: Converted input to user ObjectId: {user_obj_id} ---")
 
         pipeline = [
             {
@@ -156,24 +174,43 @@ def get_projects_for_user(user_id):
                     ]
                 }
             },
+            # Add a project stage to see exactly what's being matched BEFORE sorting
+            # This helps confirm the $match is working as expected
+            {'$project': {'name': 1, 'owner_id': 1, 'tasks.assigned_to': 1, 'created_at': 1, 'status': 1, 'description': 1, 'due_date': 1, 'tasks': 1, 'updated_at': 1}}, # Project all needed fields
             {
                 '$sort': {'created_at': -1} # Sort the results (optional)
             }
         ]
+        print(f"--- models.py/get_projects_for_user: Executing Aggregation Pipeline for {user_obj_id} ---")
+        # print(f"--- Pipeline: {pipeline} ---") # Uncomment if needed, can be verbose
+
         projects = list(mongo.db.projects.aggregate(pipeline))
 
-        # Add print statement for debugging results
-        print(f"--- models.py/get_projects_for_user: Found {len(projects)} projects for user ObjectId: {user_obj_id} ---")
-        # You can uncomment the next line to see the actual data during debugging
-        # print(f"--- models.py/get_projects_for_user: Data: {projects} ---")
+        print(f"--- models.py/get_projects_for_user: Found {len(projects)} projects for user ObjectId: {user_obj_id} via AGGREGATION ---")
+        if projects:
+             print(f"--- models.py/get_projects_for_user: Aggregation Project[0] (example): {projects[0]} ---")
 
+
+        # --- TEMPORARY: Also run simple find for direct comparison ---
+        print(f"--- models.py/get_projects_for_user: Running simple find({'owner_id': user_obj_id}) for comparison ---")
+        simple_find_results = list(mongo.db.projects.find({'owner_id': user_obj_id}))
+        print(f"--- models.py/get_projects_for_user: Simple find() found {len(simple_find_results)} projects ---")
+        if simple_find_results:
+            print(f"--- models.py/get_projects_for_user: Simple find() Project[0] owner_id: {simple_find_results[0].get('owner_id')} ---")
+            # Return the full document from find if aggregation seems problematic during debug
+            # return simple_find_results # <--- TEMPORARY DEBUG STEP
+        # --- END TEMPORARY ---
+
+
+        # Return the results from the aggregation pipeline (normal operation)
         return projects
+
     except (bson_errors.InvalidId, TypeError):
         # This error occurs if the user_id string passed in cannot be converted to ObjectId
-        print(f"Error fetching projects: Invalid user ID format for input '{user_id}'. Cannot convert to ObjectId.")
+        print(f"--- models.py/get_projects_for_user: ERROR converting user_id '{user_id}' to ObjectId. ---")
         return []
     except Exception as e:
-        print(f"Error executing aggregation pipeline for user {user_id}: {e}")
+        print(f"--- models.py/get_projects_for_user: ERROR during aggregation for user {user_id}: {e} ---")
         return []
 # === END VERIFIED/CORRECTED FUNCTION ===
 
@@ -269,23 +306,18 @@ def get_user_dict():
 def update_task_in_project(project_id, task_id, update_data):
     set_update = {f'tasks.$.{key}': value for key, value in update_data.items()}
     set_update['tasks.$.updated_at'] = datetime.utcnow()
-
     if 'assigned_to' in set_update:
         assignee_val = set_update['tasks.$.assigned_to']
         if assignee_val:
-             try:
-                 set_update['tasks.$.assigned_to'] = ObjectId(assignee_val)
+             try: set_update['tasks.$.assigned_to'] = ObjectId(assignee_val)
              except (bson_errors.InvalidId, TypeError):
                  print(f"Error updating task: Invalid assigned_to ID format '{assignee_val}'.")
                  return False
-        else:
-            set_update['tasks.$.assigned_to'] = None
-
+        else: set_update['tasks.$.assigned_to'] = None
     try:
         result = mongo.db.projects.update_one(
             {'_id': ObjectId(project_id), 'tasks._id': ObjectId(task_id)},
-            {'$set': set_update}
-        )
+            {'$set': set_update} )
         # Return True if matched, even if no fields changed (update operation itself succeeded)
         return result.matched_count > 0
     except (bson_errors.InvalidId, TypeError):
