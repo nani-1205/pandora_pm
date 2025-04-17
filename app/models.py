@@ -127,13 +127,39 @@ def get_project_by_id(project_id):
     except (bson_errors.InvalidId, TypeError):
         return None
 
+# === MODIFIED FUNCTION ===
 def get_projects_for_user(user_id):
+    """
+    Finds projects where the user is the owner OR is assigned to any task within the project.
+    Uses aggregation for efficiency.
+    """
     try:
-        # Finds projects where the user is the owner
-        # Extend this later to include projects where user is assigned
-        return list(mongo.db.projects.find({'owner_id': ObjectId(user_id)}).sort('created_at', -1))
+        user_obj_id = ObjectId(user_id) # Ensure user_id is an ObjectId
+
+        pipeline = [
+            {
+                '$match': {
+                    '$or': [
+                        {'owner_id': user_obj_id}, # Condition 1: User owns the project
+                        {'tasks.assigned_to': user_obj_id} # Condition 2: User is assigned to any task
+                    ]
+                }
+            },
+            {
+                '$sort': {'created_at': -1} # Sort the results (optional)
+            }
+            # You could add a $project stage here if you need to reshape the output,
+            # but for listing projects, returning the full document is usually fine.
+        ]
+        projects = list(mongo.db.projects.aggregate(pipeline))
+        return projects
     except (bson_errors.InvalidId, TypeError):
+        print(f"Error fetching projects: Invalid user ID format for '{user_id}'.")
         return []
+    except Exception as e:
+        print(f"Error fetching projects for user {user_id}: {e}")
+        return []
+# === END MODIFIED FUNCTION ===
 
 
 def add_task_to_project(project_id, name, description, created_by_id, status="To Do", due_date=None, assigned_to_id=None): # Added assigned_to_id parameter
@@ -217,7 +243,7 @@ def delete_project(project_id):
         print(f"Error deleting project: {e}")
         return False
 
-# --- NEW HELPER: Get user dictionary ---
+# --- HELPER: Get user dictionary ---
 def get_user_dict():
     """Returns a dictionary mapping user IDs (str) to usernames."""
     users = User.get_all_users() # Fetches list of user dicts
@@ -226,7 +252,7 @@ def get_user_dict():
     return {}
 
 
-# --- Update Task Function (Example if implementing edit task) ---
+# --- Update Task Function ---
 def update_task_in_project(project_id, task_id, update_data):
     """Updates fields of an embedded task."""
     # Construct the $set update document prefixing fields with 'tasks.$.'
@@ -236,21 +262,25 @@ def update_task_in_project(project_id, task_id, update_data):
 
     # Convert assigned_to ID string back to ObjectId if present
     if 'assigned_to' in set_update:
-        if set_update['tasks.$.assigned_to']:
+        assignee_val = set_update['tasks.$.assigned_to'] # Get the value passed
+        if assignee_val: # Check if it's a non-empty string
              try:
-                 set_update['tasks.$.assigned_to'] = ObjectId(set_update['tasks.$.assigned_to'])
+                 set_update['tasks.$.assigned_to'] = ObjectId(assignee_val)
              except (bson_errors.InvalidId, TypeError):
-                 print("Error updating task: Invalid assigned_to ID format.")
+                 print(f"Error updating task: Invalid assigned_to ID format '{assignee_val}'.")
                  return False # Or handle error differently
         else:
-            set_update['tasks.$.assigned_to'] = None # Set to null if empty string selected
+            set_update['tasks.$.assigned_to'] = None # Set to null if empty string selected ("-- Unassigned --")
+
+    # Convert due_date if present (it should already be datetime object from route)
+    # No conversion usually needed here if route logic handles it
 
     try:
         result = mongo.db.projects.update_one(
             {'_id': ObjectId(project_id), 'tasks._id': ObjectId(task_id)},
             {'$set': set_update}
         )
-        return result.modified_count > 0
+        return result.modified_count >= 0 # Return True if matched, even if no fields changed
     except (bson_errors.InvalidId, TypeError):
         print("Error updating task: Invalid project or task ID format.")
         return False
