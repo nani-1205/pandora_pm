@@ -1,7 +1,9 @@
 # pandora_pm/app/auth/routes.py
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.urls import url_parse
+# === CHANGE HERE: Import urlparse from urllib.parse instead of werkzeug ===
+from urllib.parse import urlparse
+# === END CHANGE ===
 from . import bp
 from ..models import User
 # from ..forms import LoginForm, RegistrationForm # Uncomment if using Flask-WTF
@@ -10,17 +12,6 @@ from ..models import User
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
-
-    # If using Flask-WTF:
-    # form = RegistrationForm()
-    # if form.validate_on_submit():
-    #     user = User.create(username=form.username.data, email=form.email.data, password=form.password.data)
-    #     if user:
-    #         flash('Congratulations, you are now a registered user!', 'success')
-    #         return redirect(url_for('auth.login'))
-    #     else:
-    #         flash('Registration failed. Username or email might already exist.', 'danger')
-    # return render_template('auth/register.html', title='Register', form=form)
 
     # Basic HTML Form handling:
     if request.method == 'POST':
@@ -32,6 +23,8 @@ def register():
         error = None
         if not username: error = 'Username is required.'
         elif not email: error = 'Email is required.'
+        # Add basic email format check
+        elif '@' not in email or '.' not in email: error = 'Invalid email format.'
         elif not password: error = 'Password is required.'
         elif password != password2: error = 'Passwords do not match.'
         # Add more validation (email format, password complexity) here
@@ -44,9 +37,6 @@ def register():
             if existing_user:
                 flash('Username or email already exists.', 'warning')
             else:
-                # Create user (Maybe make the very first user an admin?)
-                # is_first_user = mongo.db.users.count_documents({}) == 0
-                # role = 'admin' if is_first_user else 'user'
                 user = User.create(username, email, password) # Default role is 'user'
                 if user:
                     flash('Registration successful! Please log in.', 'success')
@@ -61,21 +51,6 @@ def register():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
-
-    # If using Flask-WTF:
-    # form = LoginForm()
-    # if form.validate_on_submit():
-    #     user_data = User.find_by_username(form.username.data)
-    #     user = User(user_data) if user_data else None
-    #     if user is None or not user.check_password(form.password.data):
-    #         flash('Invalid username or password', 'danger')
-    #         return redirect(url_for('auth.login'))
-    #     login_user(user, remember=form.remember_me.data)
-    #     next_page = request.args.get('next')
-    #     if not next_page or url_parse(next_page).netloc != '': # Security check
-    #         next_page = url_for('main.dashboard')
-    #     return redirect(next_page)
-    # return render_template('auth/login.html', title='Sign In', form=form)
 
     # Basic HTML Form handling:
     if request.method == 'POST':
@@ -98,7 +73,9 @@ def login():
                 flash('Login successful!', 'success')
                 next_page = request.args.get('next')
                  # Security: Ensure next_page is internal
-                if not next_page or url_parse(next_page).netloc != '':
+                 # === CHANGE HERE: Use urlparse (lowercase p) ===
+                if not next_page or urlparse(next_page).netloc != '':
+                # === END CHANGE ===
                     next_page = url_for('main.dashboard')
                 return redirect(next_page)
             else:
