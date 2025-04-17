@@ -14,6 +14,7 @@ class User(UserMixin):
 
     @property
     def id(self):
+        # Ensure ID is always returned as string
         return str(self.data.get('_id'))
 
     @property
@@ -50,6 +51,7 @@ class User(UserMixin):
     @staticmethod
     def get_by_id(user_id):
         try:
+            # Ensure we search using ObjectId
             user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
             if user_data:
                 return User(user_data) # Return User object wrapper
@@ -72,6 +74,7 @@ class User(UserMixin):
         }
         try:
             result = mongo.db.users.insert_one(user_doc)
+            # Return the User object wrapper for the newly created user
             return User.get_by_id(result.inserted_id)
         except Exception as e:
             print(f"Error creating user: {e}") # Log this properly
@@ -79,7 +82,7 @@ class User(UserMixin):
 
     @staticmethod
     def get_all_users():
-        # Return sorted list of user dicts (or User objects if preferred)
+        # Return sorted list of user dicts
         return list(mongo.db.users.find().sort('username', 1))
 
     @staticmethod
@@ -106,17 +109,18 @@ def create_project(name, description, owner_id, status="Not Started", due_date=N
         project_doc = {
             'name': name,
             'description': description,
-            'owner_id': ObjectId(owner_id),
+            'owner_id': ObjectId(owner_id), # Ensure owner_id is stored as ObjectId
             'status': status,
-            'due_date': due_date, # Store as datetime object
+            'due_date': due_date,
             'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow(), # Add updated_at on creation
-            'tasks': [] # Embed tasks
+            'updated_at': datetime.utcnow(),
+            'tasks': []
         }
         result = mongo.db.projects.insert_one(project_doc)
         return str(result.inserted_id)
     except (bson_errors.InvalidId, TypeError):
-        return None
+         print(f"Error creating project: Invalid owner_id format '{owner_id}'.")
+         return None
     except Exception as e:
         print(f"Error creating project: {e}")
         return None
@@ -127,80 +131,93 @@ def get_project_by_id(project_id):
     except (bson_errors.InvalidId, TypeError):
         return None
 
-# === MODIFIED FUNCTION ===
+# === VERIFIED/CORRECTED FUNCTION ===
 def get_projects_for_user(user_id):
     """
     Finds projects where the user is the owner OR is assigned to any task within the project.
     Uses aggregation for efficiency.
     """
     try:
-        user_obj_id = ObjectId(user_id) # Ensure user_id is an ObjectId
+        # --- CRITICAL: Ensure user_id is converted to ObjectId for comparison ---
+        user_obj_id = ObjectId(user_id)
+        # --- END CRITICAL ---
+
+        # Add print statement for debugging
+        print(f"--- models.py/get_projects_for_user: Fetching projects for user ObjectId: {user_obj_id} ---")
 
         pipeline = [
             {
                 '$match': {
                     '$or': [
-                        {'owner_id': user_obj_id}, # Condition 1: User owns the project
-                        {'tasks.assigned_to': user_obj_id} # Condition 2: User is assigned to any task
+                        # Compare owner_id (stored as ObjectId) with the user's ObjectId
+                        {'owner_id': user_obj_id},
+                        # Compare assigned_to (stored as ObjectId) in tasks array with user's ObjectId
+                        {'tasks.assigned_to': user_obj_id}
                     ]
                 }
             },
             {
                 '$sort': {'created_at': -1} # Sort the results (optional)
             }
-            # You could add a $project stage here if you need to reshape the output,
-            # but for listing projects, returning the full document is usually fine.
         ]
         projects = list(mongo.db.projects.aggregate(pipeline))
+
+        # Add print statement for debugging results
+        print(f"--- models.py/get_projects_for_user: Found {len(projects)} projects for user ObjectId: {user_obj_id} ---")
+        # You can uncomment the next line to see the actual data during debugging
+        # print(f"--- models.py/get_projects_for_user: Data: {projects} ---")
+
         return projects
     except (bson_errors.InvalidId, TypeError):
-        print(f"Error fetching projects: Invalid user ID format for '{user_id}'.")
+        # This error occurs if the user_id string passed in cannot be converted to ObjectId
+        print(f"Error fetching projects: Invalid user ID format for input '{user_id}'. Cannot convert to ObjectId.")
         return []
     except Exception as e:
-        print(f"Error fetching projects for user {user_id}: {e}")
+        print(f"Error executing aggregation pipeline for user {user_id}: {e}")
         return []
-# === END MODIFIED FUNCTION ===
+# === END VERIFIED/CORRECTED FUNCTION ===
 
 
-def add_task_to_project(project_id, name, description, created_by_id, status="To Do", due_date=None, assigned_to_id=None): # Added assigned_to_id parameter
+def add_task_to_project(project_id, name, description, created_by_id, status="To Do", due_date=None, assigned_to_id=None):
      try:
+        # Ensure assigned_to_id is converted to ObjectId if present
+        assignee_obj_id = ObjectId(assigned_to_id) if assigned_to_id else None
+
         task_doc = {
-            '_id': ObjectId(), # Generate ID for the embedded task
-            'project_id_ref': ObjectId(project_id), # Reference back to parent (optional but useful)
+            '_id': ObjectId(),
+            'project_id_ref': ObjectId(project_id),
             'name': name,
             'description': description,
             'status': status,
-            'due_date': due_date, # Store as datetime object
+            'due_date': due_date,
             'created_by': ObjectId(created_by_id),
-            # Store assigned_to as ObjectId if provided, else store None
-            'assigned_to': ObjectId(assigned_to_id) if assigned_to_id else None,
+            'assigned_to': assignee_obj_id, # Use the converted ObjectId or None
             'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow() # Add updated_at timestamp
+            'updated_at': datetime.utcnow()
         }
         result = mongo.db.projects.update_one(
             {'_id': ObjectId(project_id)},
             {'$push': {'tasks': task_doc}}
         )
         if result.modified_count > 0:
-            return str(task_doc['_id']) # Return the new task's ID string
+            return str(task_doc['_id'])
         else:
-            return None # Project not found or not modified
+            return None
      except (bson_errors.InvalidId, TypeError):
-        print(f"Error adding task: Invalid ObjectId format for project '{project_id}' or user/assignee ID '{assigned_to_id}'.")
+        print(f"Error adding task: Invalid ObjectId format for project '{project_id}', creator '{created_by_id}', or assignee '{assigned_to_id}'.")
         return None
      except Exception as e:
         print(f"Error adding task: {e}")
         return None
 
 def get_task_from_project(project_id, task_id):
-    """Retrieve a specific embedded task."""
     try:
         project = mongo.db.projects.find_one(
             {'_id': ObjectId(project_id), 'tasks._id': ObjectId(task_id)},
-            {'tasks.$': 1} # Projection to return only the matched task in the 'tasks' array
+            {'tasks.$': 1}
         )
         if project and 'tasks' in project and len(project['tasks']) == 1:
-            return project['tasks'][0] # Return the task document (dict)
+            return project['tasks'][0]
         return None
     except (bson_errors.InvalidId, TypeError):
         return None
@@ -208,9 +225,7 @@ def get_task_from_project(project_id, task_id):
 def update_task_status_in_project(project_id, task_id, new_status):
     try:
         result = mongo.db.projects.update_one(
-            # Match the project AND the specific task within the 'tasks' array
             {'_id': ObjectId(project_id), 'tasks._id': ObjectId(task_id)},
-            # Use the positional '$' operator to update the matched array element
             {'$set': {'tasks.$.status': new_status, 'tasks.$.updated_at': datetime.utcnow()}}
         )
         return result.modified_count > 0
@@ -224,7 +239,7 @@ def delete_task_from_project(project_id, task_id):
      try:
          result = mongo.db.projects.update_one(
              {'_id': ObjectId(project_id)},
-             {'$pull': {'tasks': {'_id': ObjectId(task_id)}}} # Pull task by its ID
+             {'$pull': {'tasks': {'_id': ObjectId(task_id)}}}
          )
          return result.modified_count > 0
      except (bson_errors.InvalidId, TypeError):
@@ -245,42 +260,34 @@ def delete_project(project_id):
 
 # --- HELPER: Get user dictionary ---
 def get_user_dict():
-    """Returns a dictionary mapping user IDs (str) to usernames."""
-    users = User.get_all_users() # Fetches list of user dicts
+    users = User.get_all_users()
     if users:
         return {str(user['_id']): user.get('username', 'Unknown') for user in users}
     return {}
 
-
 # --- Update Task Function ---
 def update_task_in_project(project_id, task_id, update_data):
-    """Updates fields of an embedded task."""
-    # Construct the $set update document prefixing fields with 'tasks.$.'
     set_update = {f'tasks.$.{key}': value for key, value in update_data.items()}
-    # Always update the 'updated_at' field for the task
     set_update['tasks.$.updated_at'] = datetime.utcnow()
 
-    # Convert assigned_to ID string back to ObjectId if present
     if 'assigned_to' in set_update:
-        assignee_val = set_update['tasks.$.assigned_to'] # Get the value passed
-        if assignee_val: # Check if it's a non-empty string
+        assignee_val = set_update['tasks.$.assigned_to']
+        if assignee_val:
              try:
                  set_update['tasks.$.assigned_to'] = ObjectId(assignee_val)
              except (bson_errors.InvalidId, TypeError):
                  print(f"Error updating task: Invalid assigned_to ID format '{assignee_val}'.")
-                 return False # Or handle error differently
+                 return False
         else:
-            set_update['tasks.$.assigned_to'] = None # Set to null if empty string selected ("-- Unassigned --")
-
-    # Convert due_date if present (it should already be datetime object from route)
-    # No conversion usually needed here if route logic handles it
+            set_update['tasks.$.assigned_to'] = None
 
     try:
         result = mongo.db.projects.update_one(
             {'_id': ObjectId(project_id), 'tasks._id': ObjectId(task_id)},
             {'$set': set_update}
         )
-        return result.modified_count >= 0 # Return True if matched, even if no fields changed
+        # Return True if matched, even if no fields changed (update operation itself succeeded)
+        return result.matched_count > 0
     except (bson_errors.InvalidId, TypeError):
         print("Error updating task: Invalid project or task ID format.")
         return False
