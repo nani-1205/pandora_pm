@@ -34,7 +34,8 @@ main.container {
 .admin-sections section,
 .project-detail-box,
 .task-detail-box,
-.admin-console-box
+.admin-console-box,
+.roadmap-box /* Added roadmap box */
 {
     background-color: rgba(40, 40, 40, 0.85); /* Dark panel, slightly transparent */
     padding: 25px;
@@ -136,6 +137,8 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .btn-secondary:hover { background-color: #555555; border-color: #666666; }
 .btn-danger { background-color: #a94442; color: #fff; border: 1px solid #993432; } /* Darker red */
 .btn-danger:hover { background-color: #c0392b; border-color: #a94442; }
+.btn-info { background-color: #4a4a4a; color: #ddd; border-color: #3a3a3a; } /* Example Info */
+.btn-info:hover { background-color: #5a5a5a; border-color: #4a4a4a;}
 .btn-sm { padding: 6px 12px; font-size: 0.9em;}
 .btn-warning { background-color: #f0ad4e; color: #fff; border-color: #eea236;}
 .btn-warning:hover { background-color: #ec971f; border-color: #d58512;}
@@ -186,6 +189,22 @@ h1 { font-size: 2.0em; } h2 { font-size: 1.6em; } h3 { font-size: 1.4em; }
 /* Links */
 a { color: #00bfa5; text-decoration: none; transition: color 0.2s;}
 a:hover { color: #3ce7c6; }
+
+/* --- Roadmap Timeline Styles (Noir Flow) --- */
+.milestone-timeline { list-style: none; padding-left: 20px; margin-top: 30px; position: relative; }
+.milestone-timeline::before { /* Vertical Line */
+    content: ''; position: absolute; left: 0; top: 5px; bottom: 5px; width: 3px;
+    background: #444444; /* Theme border color */
+}
+.milestone-timeline li { padding: 10px 0px 10px 30px; margin-bottom: 20px; position: relative; }
+.milestone-timeline li::before { /* Dot */
+    content: ''; position: absolute; left: -8px; top: 12px; width: 14px; height: 14px;
+    background-color: #00bfa5; /* Theme primary accent color */
+    border-radius: 50%; border: 3px solid #1a1a1a; /* Match body background */ z-index: 1;
+}
+.milestone-date { display: block; font-weight: bold; margin-bottom: 5px; color: #aaaaaa; font-size: 0.9em;} /* Light gray */
+.milestone-name { font-size: 1.2em; color: #dddddd; font-weight: bold;} /* Heading color */
+.milestone-desc { font-size: 0.9em; color: #cccccc; margin-top: 5px; } /* Body text color */
 
 /* Responsive overrides - Adjust as needed */
 @media (max-width: 768px) {

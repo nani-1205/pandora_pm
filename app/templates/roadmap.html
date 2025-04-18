@@ -11,15 +11,16 @@
     {% endif %}
 
     {% if milestones %}
-        <ul class="milestone-timeline"> {# Basic timeline styling below #}
+        {# Add the milestone-timeline class for CSS targeting #}
+        <ul class="milestone-timeline">
             {% for milestone in milestones %}
             <li>
+                {# Add specific classes for easier CSS targeting #}
                 <span class="milestone-date">{{ milestone.target_date.strftime('%Y-%m-%d') }}</span>
                 <strong class="milestone-name">{{ milestone.name }}</strong>
                 {% if milestone.description %}
                     <p class="milestone-desc">{{ milestone.description }}</p>
                 {% endif %}
-                {# Optional: Add links to edit/delete milestones for admins #}
             </li>
             {% endfor %}
         </ul>
@@ -28,44 +29,6 @@
     {% endif %}
 </div>
 
-{# Add CSS for .milestone-timeline in your theme files if you want a visual timeline #}
-<style>
-    /* Basic Timeline CSS - Customize per theme */
-    .milestone-timeline { list-style: none; padding-left: 20px; margin-top: 30px; position: relative; }
-    /* The vertical line */
-    .milestone-timeline::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 5px;
-        bottom: 5px;
-        width: 3px;
-        background: rgba(152, 246, 252, 0.3); /* Adjust color per theme */
-    }
-    .milestone-timeline li {
-        /* border-left: 3px solid #ccc; */ /* Replaced by ::before line */
-        padding: 10px 0px 10px 30px; /* Add left padding */
-        margin-bottom: 20px;
-        position: relative;
-        /* background-color: rgba(80, 100, 130, 0.1); */ /* Optional subtle background */
-        /* border-radius: 5px; */
-    }
-     /* The dot on the timeline */
-     .milestone-timeline li::before {
-        content: '';
-        position: absolute;
-        left: -8px; /* Position dot over the line */
-        top: 12px; /* Adjust vertical alignment */
-        width: 14px;
-        height: 14px;
-        background-color: #98f6fc; /* Adjust color per theme */
-        border-radius: 50%;
-        border: 3px solid #1e1e1e; /* Adjust to match body background of theme */
-        z-index: 1;
-    }
-    .milestone-date { display: block; font-weight: bold; margin-bottom: 5px; color: #aaa; font-size: 0.9em;}
-    .milestone-name { font-size: 1.2em; color: #e0fbfc; /* Adjust color per theme */}
-    .milestone-desc { font-size: 0.9em; color: #bbb; margin-top: 5px; }
-</style>
+{# The <style> block that was previously here has been removed. #}
 
 {% endblock %}
