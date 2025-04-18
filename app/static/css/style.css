@@ -1,11 +1,18 @@
 /* app/static/css/style.css */
-/* --- AVATAR THEME PLACEHOLDER --- */
+/* --- AVATAR THEME STYLES --- */
 
 body {
-    /* Example: Deep blue/purple gradient background */
-    background: linear-gradient(to bottom right, #0b132b, #1c2541, #3a506b);
-    color: #e0fbfc; /* Light cyan/white text */
-    font-family: sans-serif; /* Choose an Avatar-like font */
+    /* --- Background Image --- */
+    background-image: url('../img/background.jpg'); /* Ensure background.jpg is in static/img/ */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* Keeps background fixed during scroll */
+    background-color: #050a14; /* Dark fallback color */
+    /* --- End Background Image --- */
+
+    color: #e0fbfc; /* Light cyan/white text for good contrast */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; /* Default sans-serif stack */
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -13,157 +20,282 @@ body {
     flex-direction: column;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 15px;
-    background-color: rgba(28, 37, 65, 0.8); /* Semi-transparent dark panel */
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(152, 246, 252, 0.3); /* Bioluminescent glow */
-    flex-grow: 1;
+/* Main Content Area */
+main.container { /* Specifically target the main container if needed */
+    flex-grow: 1; /* Allows the main content to fill available space */
+    max-width: 1200px; /* Or your preferred max width */
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px; /* Padding around the main content block */
+    width: 95%; /* Responsive width */
 }
+
+/* General Styling for Content Panels/Boxes */
+.form-container,
+.dashboard-admin,
+.dashboard-user,
+.project-list li,
+.task-list .task-item, /* Target specific task items if needed */
+.admin-sections section,
+.project-detail-box, /* Add a class to project detail main box if needed */
+.task-detail-box, /* Add a class to task detail main box if needed */
+.admin-console-box /* Add a class to admin console main box if needed */
+{
+    background-color: rgba(11, 19, 43, 0.85); /* Dark blue/purple semi-transparent */
+    /* Optional Gradient: */
+    /* background: linear-gradient(to bottom, rgba(11, 19, 43, 0.9), rgba(28, 37, 65, 0.8)); */
+
+    padding: 25px;
+    border-radius: 10px; /* Slightly more rounded corners */
+    margin-bottom: 25px; /* Spacing between panels */
+    box-shadow: 0 0 18px rgba(152, 246, 252, 0.25); /* Slightly stronger glow */
+    border: 1px solid rgba(152, 246, 252, 0.1); /* Subtle border */
+}
+
+/* Ensure list items don't double-background if the list itself has a background */
+.project-list, .task-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.project-list li,
+.task-list .task-item {
+    /* Reset background if parent has one, or adjust transparency */
+    /* background-color: rgba(28, 37, 65, 0.75); */ /* Slightly different shade/transparency? */
+    border-left-width: 5px;
+    border-left-style: solid;
+    padding: 15px; /* Adjust padding for list items */
+    margin-bottom: 15px; /* Adjust spacing */
+}
+
 
 /* Navbar */
 .navbar {
-    background-color: rgba(11, 19, 43, 0.9); /* Darker semi-transparent */
-    padding: 10px 20px;
+    background-color: rgba(5, 10, 20, 0.9); /* Darker semi-transparent navbar */
+    padding: 12px 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+    border-bottom: 1px solid rgba(152, 246, 252, 0.15);
 }
 .navbar-brand {
     color: #98f6fc; /* Bright cyan */
     font-weight: bold;
-    font-size: 1.5em;
+    font-size: 1.8em;
     text-decoration: none;
-    text-shadow: 0 0 5px #98f6fc;
+    text-shadow: 0 0 8px #98f6fc;
 }
 .navbar ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
+    align-items: center; /* Align items vertically */
 }
 .navbar ul li {
-    margin-left: 15px;
+    margin-left: 20px;
+    position: relative; /* Needed for dropdown */
 }
 .navbar ul li a {
     color: #e0fbfc;
     text-decoration: none;
-    padding: 5px 10px;
+    padding: 8px 12px;
     border-radius: 4px;
     transition: background-color 0.3s, text-shadow 0.3s;
+    display: block; /* Make links fill space for easier clicking */
 }
 .navbar ul li a:hover, .navbar ul li a.active {
-    background-color: rgba(58, 80, 107, 0.7);
-    text-shadow: 0 0 8px #e0fbfc;
+    background-color: rgba(58, 80, 107, 0.8);
+    text-shadow: 0 0 10px #e0fbfc;
 }
 .navbar ul li span { /* For username display */
     color: #a7d6e8;
-    margin-right: 10px;
+    margin-right: 15px;
+    padding: 8px 0; /* Match link padding */
 }
-/* Add styles for dropdown if used */
+/* Dropdown Styles */
+.navbar ul li.dropdown ul.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: rgba(11, 19, 43, 0.95); /* Slightly more opaque */
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+    z-index: 1;
+    border-radius: 0 0 5px 5px;
+    border: 1px solid rgba(152, 246, 252, 0.1);
+    border-top: none;
+    top: 100%; /* Position below parent */
+    left: 0; /* Align with parent */
+}
+.navbar ul li.dropdown:hover ul.dropdown-content {
+    display: block;
+}
+.navbar ul li.dropdown ul.dropdown-content li {
+    margin-left: 0; /* Reset margin */
+}
+.navbar ul li.dropdown ul.dropdown-content li a {
+    color: #e0fbfc;
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    border-radius: 0; /* No radius inside dropdown */
+}
+.navbar ul li.dropdown ul.dropdown-content li a:hover {
+    background-color: rgba(58, 80, 107, 0.9);
+    text-shadow: 0 0 10px #e0fbfc;
+}
+
 
 /* Forms */
 .form-container {
-    background-color: rgba(11, 19, 43, 0.85);
-    padding: 25px;
-    border-radius: 5px;
-    margin: 20px auto;
-    max-width: 500px;
-    box-shadow: 0 0 10px rgba(152, 246, 252, 0.2);
+    /* Inherits background from general panel styles */
+    max-width: 600px; /* Adjust width as needed */
+    margin: 40px auto; /* Center form containers */
 }
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 .form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     color: #b3e0f2; /* Lighter blue for labels */
+    font-weight: bold;
 }
-.form-control {
-    width: 95%; /* Adjust as needed */
-    padding: 10px;
+.form-control,
+select.form-control,
+textarea.form-control { /* Apply to all form inputs */
+    width: 95%; /* Adjust as needed, consider padding */
+    padding: 12px;
     background-color: rgba(91, 192, 190, 0.1); /* Faint teal input background */
     border: 1px solid #3a506b;
-    border-radius: 4px;
+    border-radius: 5px;
     color: #e0fbfc;
+    font-size: 1em;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
-.form-control:focus {
+.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus {
     outline: none;
     border-color: #98f6fc;
-    box-shadow: 0 0 8px rgba(152, 246, 252, 0.5);
+    box-shadow: 0 0 10px rgba(152, 246, 252, 0.6);
 }
 textarea.form-control {
-    min-height: 80px;
+    min-height: 100px;
+    resize: vertical; /* Allow vertical resizing */
 }
 .form-check {
     display: flex;
     align-items: center;
+    color: #b3e0f2;
 }
-.form-check input {
-    margin-right: 8px;
+.form-check input[type="checkbox"] {
+    margin-right: 10px;
+    width: auto; /* Override default width */
+}
+.form-check label {
+    margin-bottom: 0; /* Align label with checkbox */
+    font-weight: normal;
 }
 
 /* Buttons */
 .btn {
-    padding: 10px 20px;
+    padding: 12px 25px;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
     text-decoration: none;
     font-weight: bold;
-    transition: background-color 0.3s, box-shadow 0.3s;
+    font-size: 1em;
+    transition: background-color 0.3s, box-shadow 0.3s, transform 0.1s;
+    display: inline-block; /* Ensure proper spacing and alignment */
+    margin-right: 10px; /* Add some space between buttons */
+    border: 1px solid transparent; /* Base border */
 }
+.btn:last-child {
+    margin-right: 0;
+}
+.btn:hover {
+    transform: translateY(-1px); /* Subtle lift effect */
+}
+.btn:active {
+     transform: translateY(0px); /* Press effect */
+}
+
 .btn-primary {
     background-color: #5bc0be; /* Teal/Cyan */
     color: #0b132b; /* Dark blue text */
+    border-color: #4db4b2;
 }
 .btn-primary:hover {
     background-color: #7adedc;
-    box-shadow: 0 0 10px rgba(152, 246, 252, 0.6);
+    box-shadow: 0 0 12px rgba(152, 246, 252, 0.7);
+    border-color: #6ad5d3;
 }
 .btn-secondary {
     background-color: #3a506b; /* Darker accent blue */
     color: #e0fbfc;
+    border-color: #304257;
 }
  .btn-secondary:hover {
     background-color: #4e6a8a;
+    border-color: #435a74;
+    box-shadow: 0 0 8px rgba(152, 246, 252, 0.3);
 }
+.btn-danger { /* Example for Delete buttons */
+    background-color: #c9302c; /* Darker red */
+    color: #fff;
+    border-color: #ac2925;
+}
+.btn-danger:hover {
+    background-color: #d9534f;
+    border-color: #c9302c;
+    box-shadow: 0 0 10px rgba(248, 120, 120, 0.5);
+}
+
 .btn-sm { /* For smaller buttons like admin toggle */
-     padding: 5px 10px;
+     padding: 6px 12px;
      font-size: 0.9em;
 }
 .btn-warning { /* For revoke admin */
-     background-color: #f0ad4e; color: #fff;
+     background-color: #f0ad4e; color: #fff; border-color: #eea236;
+}
+.btn-warning:hover {
+    background-color: #ec971f; border-color: #d58512;
 }
 .btn-success { /* For make admin */
-    background-color: #5cb85c; color: #fff;
+    background-color: #5cb85c; color: #fff; border-color: #4cae4c;
+}
+.btn-success:hover {
+    background-color: #449d44; border-color: #398439;
 }
 
 
 /* Flashes */
+.flash-messages {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 20px;
+}
 .flash-messages .alert {
     padding: 15px;
     margin-bottom: 15px;
-    border-radius: 4px;
+    border-radius: 6px;
     border: 1px solid transparent;
+    color: #000; /* Default dark text for light alerts */
 }
-.alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb;}
-.alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;}
-.alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;}
-.alert-warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba;}
+.alert-success { background-color: #dff0d8; color: #3c763d; border-color: #d6e9c6;}
+.alert-danger { background-color: #f2dede; color: #a94442; border-color: #ebccd1;}
+.alert-info { background-color: #d9edf7; color: #31708f; border-color: #bce8f1;}
+.alert-warning { background-color: #fcf8e3; color: #8a6d3b; border-color: #faebcc;}
 
 
 /* Task Lists and Statuses */
-.task-list { list-style: none; padding-left: 0; }
-.task-item {
-    background-color: rgba(58, 80, 107, 0.5);
-    padding: 10px 15px;
-    margin-bottom: 10px;
+.task-list .task-item {
+    /* Inherits background from panel styles, or define explicitly */
+    /* background-color: rgba(58, 80, 107, 0.6); */
     border-left: 5px solid #ccc; /* Default border */
-    border-radius: 4px;
 }
 .task-item a { color: #98f6fc; text-decoration: none; }
 .task-item a:hover { text-decoration: underline; }
@@ -175,40 +307,126 @@ textarea.form-control {
 .status-in-review { border-left-color: #f0ad4e; } /* Yellow/Orange */
 .status-done { border-left-color: #5cb85c; } /* Green */
 
+/* Also apply status colors to inline status tags/spans if needed */
+span.status-to-do { background-color: #6c757d; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 0.85em;}
+span.status-in-progress { background-color: #5bc0be; color: #050a14; padding: 2px 6px; border-radius: 3px; font-size: 0.85em;}
+span.status-blocked { background-color: #d9534f; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 0.85em;}
+span.status-in-review { background-color: #f0ad4e; color: #050a14; padding: 2px 6px; border-radius: 3px; font-size: 0.85em;}
+span.status-done { background-color: #5cb85c; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 0.85em;}
+
+
 /* Admin Table */
 .user-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    background-color: rgba(28, 37, 65, 0.6); /* Slight background for the table */
+    border-radius: 5px; /* Optional rounding */
+    overflow: hidden; /* Ensures border radius clips content */
 }
 .user-table th, .user-table td {
-    padding: 10px;
+    padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid #3a506b;
+    border-bottom: 1px solid rgba(58, 80, 107, 0.5); /* Subtle row separator */
 }
 .user-table th {
-    background-color: rgba(11, 19, 43, 0.9);
+    background-color: rgba(11, 19, 43, 0.9); /* Darker header */
     color: #98f6fc;
+    font-weight: bold;
 }
-.user-table tr:nth-child(even) {
-    background-color: rgba(28, 37, 65, 0.6); /* Slightly different for rows */
+.user-table tr:last-child td {
+    border-bottom: none; /* Remove border from last row */
+}
+.user-table tr:hover {
+    background-color: rgba(58, 80, 107, 0.4); /* Row hover effect */
 }
 
 /* Footer */
 footer {
     text-align: center;
-    padding: 15px;
-    margin-top: 20px; /* Pushes footer down */
+    padding: 20px;
+    margin-top: auto; /* Pushes footer down if content is short */
     color: #a7d6e8;
     font-size: 0.9em;
-    background-color: rgba(11, 19, 43, 0.8);
+    background-color: rgba(5, 10, 20, 0.85); /* Semi-transparent footer */
+    border-top: 1px solid rgba(152, 246, 252, 0.1);
 }
 
 /* Errors */
 .errors small {
-    color: #f87878; /* Light red for errors */
+    color: #f89d9d; /* Light red for errors */
     display: block;
-    margin-top: 3px;
+    margin-top: 5px;
+    font-weight: bold;
+}
+.form-control.is-invalid { /* Add class via Flask-WTF if needed */
+    border-color: #a94442;
+    box-shadow: 0 0 8px rgba(248, 120, 120, 0.5);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    color: #cdeff7; /* Light blue headings */
+    /* Optional: Add subtle text shadow for readability on complex backgrounds */
+    /* text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); */
+    margin-top: 0; /* Remove default top margin often */
+    margin-bottom: 15px; /* Consistent bottom margin */
+    font-weight: bold;
+}
+h1 { font-size: 2.2em; }
+h2 { font-size: 1.8em; }
+h3 { font-size: 1.5em; }
+
+/* Links */
+a {
+    color: #98f6fc; /* Bright cyan links */
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+a:hover {
+    color: #c1fdff;
+    text-decoration: none; /* Keep underline off by default? */
 }
 
 /* Add more styles for specific elements, responsiveness etc */
+@media (max-width: 768px) {
+    .navbar ul {
+        flex-direction: column; /* Stack nav items on small screens */
+        width: 100%;
+    }
+    .navbar ul li {
+        margin-left: 0;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+     .navbar ul li.dropdown ul.dropdown-content {
+        position: static; /* Dropdown becomes part of flow */
+        box-shadow: none;
+        border: none;
+        background-color: transparent;
+     }
+    main.container {
+        width: 98%;
+        padding: 10px;
+    }
+    .form-container {
+         width: 90%;
+         padding: 15px;
+    }
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.95em;
+        display: block; /* Make buttons full width */
+        width: 90%;
+        margin: 10px auto; /* Center buttons */
+    }
+    .btn:last-child {
+         margin-bottom: 0;
+    }
+    .user-table {
+         font-size: 0.9em;
+    }
+     .user-table th, .user-table td {
+        padding: 8px 10px;
+    }
+}
