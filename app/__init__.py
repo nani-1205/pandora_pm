@@ -24,7 +24,8 @@ if selected_config.MONGO_URI:
                  masked_uri_for_log = f"mongodb://****@{uri_parts[1]}"
         else:
              masked_uri_for_log = "mongodb://[masked-auth]@" + uri_parts[1]
-
+    else: # Handle case like mongodb://host/db
+        masked_uri_for_log = selected_config.MONGO_URI
 
 def create_app():
     """Application Factory Function"""
@@ -40,8 +41,10 @@ def create_app():
     print("-" * 50)
 
     # --- Add specific checks for Production if needed ---
-    if app.config['ENV'] == 'production':
-        print("Production environment detected. Performing checks...")
+    # Note: FLASK_ENV might not be reliably set, use app.config['ENV'] if available
+    # or rely on the config class type.
+    if isinstance(selected_config, config_by_name['production']):
+        print("Production environment Configuration Class loaded. Performing checks...")
         # Check if essential DB connection info is present in the loaded config
         if not app.config.get('MONGO_URI'):
              print("CRITICAL: MONGO_URI is not configured for production. Check environment variables (MONGODB_HOST, DATABASE_NAME).")
@@ -63,6 +66,7 @@ def create_app():
         # Ensure MONGO_URI exists before initializing
         if not app.config.get('MONGO_URI'):
              print("CRITICAL: Cannot initialize PyMongo because MONGO_URI is not set in the configuration.")
+             print("Check MONGODB_HOST and DATABASE_NAME environment variables.")
              sys.exit("Configuration Error: MONGO_URI missing")
 
         mongo.init_app(app)
@@ -138,6 +142,7 @@ def create_app():
 
     @app.errorhandler(500)
     def internal_server_error(error):
+        # Use Flask's built-in logger
         app.logger.error(f"Internal Server Error: {error}", exc_info=sys.exc_info())
         return render_template('errors/500.html', title="Server Error"), 500
 
@@ -147,6 +152,11 @@ def create_app():
     # =======================================
     with app.app_context():
         try:
+            # Ensure mongo.db is available after successful init
+            if not mongo or not hasattr(mongo, 'db'):
+                 print("CRITICAL: mongo.db not available for database checks.")
+                 sys.exit("DB Check Error: mongo object not ready.")
+
             db_name = mongo.db.name # Get the actual DB name from the connection
             print("-" * 50)
             print(f"Checking Database '{db_name}' and Collections...")
@@ -172,21 +182,17 @@ def create_app():
 
                 # Ensure Indexes
                 print(f"  Ensuring indexes for '{coll_name}'...")
-                current_indexes = collection.index_information()
+                # Don't query indexes if collection doesn't exist yet, create_index will handle it
+                # current_indexes = collection.index_information() if coll_name in existing_collections else {}
 
                 for index_info in indexes:
-                    index_name = index_info['options'].get('name')
-                    if index_name and index_name in current_indexes:
-                         # print(f"    - Index '{index_name}' already exists.")
-                         pass
-                    else:
-                         # Attempt to create index if name not found or if no name specified
-                         try:
-                            collection.create_index(index_info['keys'], **index_info['options'])
-                            new_index_name = index_info['options'].get('name', '_'.join([k[0] for k in index_info['keys']]) + '_idx') # Generate name if needed
-                            print(f"    - Ensured index: '{new_index_name}'")
-                         except OperationFailure as idx_e:
-                              print(f"    - Warning: Could not ensure index {index_info['keys']} (permissions? conflict?): {idx_e.details}")
+                    try:
+                        # create_index is idempotent, safe to call even if index exists
+                        collection.create_index(index_info['keys'], **index_info['options'])
+                        index_name = index_info['options'].get('name', '_'.join([k[0] for k in index_info['keys']]) + '_idx') # Generate name if needed
+                        print(f"    - Ensured index: '{index_name}'")
+                    except OperationFailure as idx_e:
+                            print(f"    - Warning: Could not ensure index {index_info['keys']} (permissions? conflict?): {idx_e.details}")
 
 
             print("Database and collection checks complete.")

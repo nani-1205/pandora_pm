@@ -19,9 +19,10 @@ else:
          load_dotenv(os.path.join(pm2_cwd, '.env'))
          print(f".env file loaded successfully from PM2 CWD: {os.path.join(pm2_cwd, '.env')}")
      else:
+         # Use the project_root path in the warning
          print(f"Warning: .env file not found at primary path: {dotenv_path}")
          if pm2_cwd:
-             print(f"Warning: Also checked PM2 CWD: {os.path.join(pm2_cwd, '.env')}")
+             print(f"Warning: Also checked PM2 CWD path: {os.path.join(pm2_cwd, '.env')}")
 
 
 class Config:
@@ -48,7 +49,6 @@ class Config:
                 f"{MONGODB_HOST}:{MONGODB_PORT}/{DATABASE_NAME}"
                 f"?authSource={MONGODB_AUTH_SOURCE}"
             )
-            # print(f"Connecting to MongoDB with user '{MONGODB_USERNAME}' on authSource '{MONGODB_AUTH_SOURCE}'") # Moved print lower
         elif MONGODB_USERNAME: # Handle username only case if applicable (less common, might need authSource)
              encoded_username = quote_plus(MONGODB_USERNAME)
              MONGO_URI = (
@@ -56,11 +56,9 @@ class Config:
                 f"{MONGODB_HOST}:{MONGODB_PORT}/{DATABASE_NAME}"
                 f"?authSource={MONGODB_AUTH_SOURCE}"
             )
-             # print(f"Connecting to MongoDB with user '{MONGODB_USERNAME}' (no password) on authSource '{MONGODB_AUTH_SOURCE}'")
         else:
             # URI for unauthenticated connection
             MONGO_URI = f"mongodb://{MONGODB_HOST}:{MONGODB_PORT}/{DATABASE_NAME}"
-            # print(f"Connecting to MongoDB without authentication.")
     else:
         # Handle case where essential DB config is missing
         print("Warning: MONGODB_HOST or DATABASE_NAME not found in environment. MONGO_URI not constructed.")
@@ -104,7 +102,6 @@ class TestingConfig(Config):
          MONGO_URI = None # Cannot construct test URI without host
          print("Warning: TestingConfig cannot construct MONGO_URI because MONGODB_HOST is not set.")
 
-
     WTF_CSRF_ENABLED = False # Often disable CSRF for tests
 
 
@@ -114,12 +111,7 @@ class ProductionConfig(Config):
     TESTING = False # Ensure Testing is off
     print("Loading Production Configuration")
 
-    # --- REMOVED THE CHECK FROM CLASS BODY ---
-    # The check should happen in create_app or rely on environment setup.
-    # Example check to add in create_app if needed:
-    # if app.config['ENV'] == 'production':
-    #    if not app.config.get('MONGODB_HOST') or ... :
-    #         raise ValueError("Production config missing required DB settings")
+    # Production checks moved to create_app
 
 
 # Dictionary to easily select config based on environment variable
@@ -127,7 +119,7 @@ config_by_name = dict(
     development=DevelopmentConfig,
     testing=TestingConfig,
     production=ProductionConfig,
-    default=DevelopmentConfig
+    default=DevelopmentConfig # Default to Development
 )
 
 def get_config():
@@ -153,13 +145,15 @@ if selected_config.MONGO_URI:
                  masked_uri = f"mongodb://****:****@{uri_parts[1]}"
              else:
                  masked_uri = f"mongodb://****@{uri_parts[1]}"
-        else: # Should not happen with valid URI but handle gracefully
+        else:
              masked_uri = "mongodb://[masked-auth]@" + uri_parts[1]
+    else: # Handle case like mongodb://host/db
+         masked_uri = selected_config.MONGO_URI
 
     print(f"Final MONGO_URI (masked): {masked_uri}")
 else:
-     print("Final MONGO_URI: Not constructed (Check MONGODB_HOST/DATABASE_NAME)")
+     print("Final MONGO_URI: Not constructed (Check MONGODB_HOST/DATABASE_NAME in environment)")
 
-print(f"Final Database Name: {selected_config.MONGO_DBNAME or 'Not Set'}")
+print(f"Final Database Name: {selected_config.MONGO_DBNAME or 'Not Set (Check DATABASE_NAME in environment)'}")
 print(f"Debug Mode: {selected_config.DEBUG}")
-print(f"Secret Key Set: {'Yes' if selected_config.SECRET_KEY and selected_config.SECRET_KEY != 'you-should-really-set-a-secret-key' else 'No / Default'}")
+print(f"Secret Key Set: {'Yes' if selected_config.SECRET_KEY and selected_config.SECRET_KEY != 'you-should-really-set-a-secret-key' else 'No / Default (Set SECRET_KEY in environment)'}")
