@@ -2,15 +2,16 @@
 from flask import (
     render_template, url_for, flash, redirect, request, abort, Blueprint, current_app
 )
-# Import extensions initialized in __init__
-from . import db, bcrypt, login_manager # Import login_manager if needed for decorators directly
+# --- Import extensions from the new file ---
+from .extensions import db, bcrypt, login_manager
 
 # Import Forms, Models, Decorators
 from .forms import (
     RegistrationForm, LoginForm, ProjectForm, TaskForm, UpdateTaskStatusForm,
-    UpdateProfileForm # <-- Import new form
+    UpdateProfileForm
 )
-from .models import User, Project, Task # User model needed for profile update
+# Models are imported here as they depend on extensions now
+from .models import User, Project, Task
 from .decorators import admin_required
 
 # Import Flask-Login utilities
@@ -76,12 +77,11 @@ def login():
     if form.validate_on_submit():
         user = User.objects(email=form.email.data).first()
         if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember.data)
+            login_user(user, remember=form.remember.data) # Uses login_manager implicitly
             next_page = request.args.get('next')
             flash('Login Successful!', 'success')
             # Basic security check for next_page to prevent open redirect
             if next_page and next_page.startswith('/') and not next_page.startswith('//'):
-                 # Consider using url_has_allowed_host_and_scheme from werkzeug.utils for better security
                  return redirect(next_page)
             else:
                  return redirect(url_for('main.dashboard')) # Default redirect
@@ -93,7 +93,7 @@ def login():
 @login_required
 def logout():
     """Handles user logout."""
-    logout_user()
+    logout_user() # Uses login_manager implicitly
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index')) # Use blueprint name
 
@@ -114,7 +114,7 @@ def dashboard():
         return render_template('dashboard.html', title='My Dashboard', assigned_tasks=assigned_tasks)
 
 
-# --- NEW PROFILE ROUTES ---
+# --- Profile Routes ---
 
 @main_routes.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -128,22 +128,33 @@ def profile():
     if form.validate_on_submit():
         try:
             # Update user fields if they changed
+            needs_save = False # Flag to check if save is needed
             if current_user.username != form.username.data:
-                current_user.username = form.username.data
+                 # If allowing username change, uncomment below:
+                 # current_user.username = form.username.data
+                 # needs_save = True
+                 # Note: Current setup makes username readonly in template/form validation
+                 pass # Keep username as is if readonly
             if current_user.email != form.email.data:
                 current_user.email = form.email.data
+                needs_save = True
 
             # Update theme preference
             if current_user.theme != form.theme.data:
                 current_user.theme = form.theme.data
+                needs_save = True
 
-            current_user.save() # Save all changes
-            flash('Your profile has been updated successfully!', 'success')
-            log.info(f"User '{current_user.username}' updated profile. Theme set to '{current_user.theme}'.")
+            if needs_save:
+                current_user.save() # Save changes if any were made
+                flash('Your profile has been updated successfully!', 'success')
+                log.info(f"User '{current_user.username}' updated profile. Theme set to '{current_user.theme}'.")
+            else:
+                flash('No changes detected in profile.', 'info')
+
             return redirect(url_for('main.profile')) # Redirect back to profile page
 
         except NotUniqueError:
-             flash('Update failed. The chosen username or email is already in use by another account.', 'danger')
+             flash('Update failed. The chosen email is already in use by another account.', 'danger')
         except MongoValidationError as e:
             log.error(f"Validation error updating profile for user {current_user.username}: {e}", exc_info=True)
             flash(f'Update failed due to a validation error: {e}', 'danger')
@@ -164,8 +175,6 @@ def profile():
 
 
     return render_template('profile.html', title='My Profile', form=form)
-
-# --- End Profile Routes ---
 
 
 # --- Project Routes ---
@@ -188,7 +197,7 @@ def create_project():
             project = Project(name=form.name.data,
                               description=form.description.data,
                               created_by=current_user)
-            project.save()
+            project.save() # Uses db implicitly
             flash('Project created successfully!', 'success')
             return redirect(url_for('main.list_projects')) # Use blueprint name
         except NotUniqueError:
@@ -205,8 +214,8 @@ def create_project():
 @login_required
 def project_detail(project_id):
     """Shows details of a specific project and its tasks."""
-    project = Project.objects(pk=project_id).first_or_404()
-    tasks = Task.objects(project=project).order_by('status', 'due_date')
+    project = Project.objects(pk=project_id).first_or_404() # Uses db implicitly
+    tasks = Task.objects(project=project).order_by('status', 'due_date') # Uses db implicitly
     return render_template('project_detail.html', title=project.name, project=project, tasks=tasks)
 
 # --- Task Routes ---
@@ -221,10 +230,9 @@ def create_task(project_id):
 
     if form.validate_on_submit():
         try:
-            assigned_user = User.objects(pk=form.assigned_to.data).first()
+            assigned_user = User.objects(pk=form.assigned_to.data).first() # Uses db implicitly
             if not assigned_user:
                 flash('Selected user for assignment not found.', 'danger')
-                # Re-render form with validation error implicitly handled by WTForms
                 return render_template('create_task.html', title='New Task', form=form, project=project)
 
             task = Task(title=form.title.data,
@@ -234,7 +242,7 @@ def create_task(project_id):
                         created_by=current_user,
                         status=form.status.data,
                         due_date=form.due_date.data)
-            task.save()
+            task.save() # Uses db implicitly
             flash('Task created and assigned successfully!', 'success')
             return redirect(url_for('main.project_detail', project_id=project.id)) # Use blueprint name
         except MongoValidationError as e:
@@ -244,7 +252,6 @@ def create_task(project_id):
              log.error(f"Unexpected error creating task '{form.title.data}' for project {project_id}: {e}", exc_info=True)
              flash(f'An unexpected error occurred while creating the task.', 'danger')
     elif request.method == 'POST':
-         # Log form errors if validation fails on POST
          log.warning(f"Task creation form validation failed for project {project_id}: {form.errors}")
 
     return render_template('create_task.html', title='New Task', form=form, project=project)
@@ -253,21 +260,18 @@ def create_task(project_id):
 @login_required
 def task_detail(task_id):
     """Shows task details and allows status updates by assigned user or admin."""
-    task = Task.objects(pk=task_id).first_or_404()
+    task = Task.objects(pk=task_id).first_or_404() # Uses db implicitly
 
-    # Authorization: Only assigned user or admin can update status
     can_update = (current_user == task.assigned_to or current_user.is_admin)
-
-    form = UpdateTaskStatusForm(obj=task) # Pre-populate form with current status
+    form = UpdateTaskStatusForm(obj=task)
 
     if can_update and form.validate_on_submit():
         try:
-            original_status = task.status # Optional: Store original status for logging
+            original_status = task.status
             task.status = form.status.data
-            task.save()
+            task.save() # Uses db implicitly
             log.info(f"User '{current_user.username}' updated task '{task_id}' status from '{original_status}' to '{task.status}'.")
             flash('Task status updated successfully!', 'success')
-            # Redirect back to the task detail page
             return redirect(url_for('main.task_detail', task_id=task.id)) # Use blueprint name
         except MongoValidationError as e:
              log.error(f"Validation error updating task {task_id} status: {e}", exc_info=True)
@@ -307,15 +311,14 @@ def admin_toggle_admin(user_id):
     """Toggles the admin status of a user."""
     user_to_modify = User.objects(pk=user_id).first_or_404()
 
-    # Basic safety: Prevent the only admin from removing their own admin status
     if user_to_modify == current_user and User.objects(is_admin=True).count() <= 1:
          flash('Cannot remove admin status from the only remaining admin.', 'danger')
-         return redirect(url_for('main.admin_list_users')) # Use blueprint name
+         return redirect(url_for('main.admin_list_users'))
 
     try:
         original_admin_status = user_to_modify.is_admin
         user_to_modify.is_admin = not user_to_modify.is_admin
-        user_to_modify.save()
+        user_to_modify.save() # Uses db implicitly
         status = "granted" if user_to_modify.is_admin else "revoked"
         log.info(f"Admin '{current_user.username}' {status} admin status for user '{user_to_modify.username}'.")
         flash(f'Admin status {status} for user {user_to_modify.username}.', 'success')
@@ -323,7 +326,7 @@ def admin_toggle_admin(user_id):
         log.error(f"Error toggling admin status for user {user_id} by admin {current_user.username}: {e}", exc_info=True)
         flash(f'Error updating user status: {e}', 'danger')
 
-    return redirect(url_for('main.admin_list_users')) # Use blueprint name
+    return redirect(url_for('main.admin_list_users'))
 
 
 # --- Error Handlers (Registered on Blueprint) ---
@@ -337,7 +340,5 @@ def not_found_error(error):
 @main_routes.app_errorhandler(500)
 def internal_error(error):
     """Handles 500 internal server errors."""
-    # Log the actual exception
     log.error(f"500 Internal Server Error for URL: {request.url}", exc_info=error)
-    # db.session.rollback() # Not needed for MongoEngine usually
     return render_template('errors/500.html'), 500
