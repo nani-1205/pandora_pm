@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="hero-section"> <!-- Style with Avatar theme -->
-        <h1>Welcome to Avatar Project Management</h1>
+    <div class="hero-section"> <!-- Style with Pandora theme -->
+        <h1>Welcome to Pandora Project Management</h1> {# <-- UPDATED #}
         <p>Manage your projects like navigating the forests of Pandora.</p>
         {% if not current_user.is_authenticated %}
         <p>
-            <a href="{{ url_for('main.register') }}" class="btn btn-primary">Get Started</a> {# <-- UPDATED #}
-            <a href="{{ url_for('main.login') }}" class="btn btn-secondary">Login</a> {# <-- UPDATED #}
+            <a href="{{ url_for('main.register') }}" class="btn btn-primary">Get Started</a>
+            <a href="{{ url_for('main.login') }}" class="btn btn-secondary">Login</a>
         </p>
         {% endif %}
     </div>
