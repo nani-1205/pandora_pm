@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container profile-form"> {# Add class for specific styling if needed #}
+    <h2>My Profile</h2>
+    <form method="POST" action="{{ url_for('main.profile') }}">
+        {{ form.hidden_tag() }} <!-- CSRF token -->
+
+        <fieldset class="profile-section">
+            <legend>Account Info</legend>
+            <div class="form-group">
+                {{ form.username.label }}
+                {{ form.username(class="form-control", readonly=true, title="Username cannot be changed here") }} {# Example: Make username readonly #}
+                {% if form.username.errors %}
+                    <div class="errors">
+                        {% for error in form.username.errors %}<small>{{ error }}</small>{% endfor %}
+                    </div>
+                {% endif %}
+                 <small class="form-text text-muted">Username cannot be changed after registration (for this example).</small> {# Example help text #}
+            </div>
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email(class="form-control") }}
+                {% if form.email.errors %}
+                    <div class="errors">
+                        {% for error in form.email.errors %}<small>{{ error }}</small>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+        <fieldset class="profile-section">
+            <legend>Preferences</legend>
+            <div class="form-group">
+                {{ form.theme.label }}
+                {# Apply form-control for consistency, select styling handles appearance #}
+                {{ form.theme(class="form-control") }}
+                {% if form.theme.errors %}
+                    <div class="errors">
+                        {% for error in form.theme.errors %}<small>{{ error }}</small>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+         <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a> {# Example Cancel button #}
+        </div>
+    </form>
+    {# Optional: Add link to change password here #}
+    {# <p><a href="{{ url_for('main.change_password') }}">Change Password</a></p> #}
+</div>
+{% endblock %}

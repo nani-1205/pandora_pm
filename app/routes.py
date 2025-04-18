@@ -7,9 +7,10 @@ from . import db, bcrypt, login_manager # Import login_manager if needed for dec
 
 # Import Forms, Models, Decorators
 from .forms import (
-    RegistrationForm, LoginForm, ProjectForm, TaskForm, UpdateTaskStatusForm
+    RegistrationForm, LoginForm, ProjectForm, TaskForm, UpdateTaskStatusForm,
+    UpdateProfileForm # <-- Import new form
 )
-from .models import User, Project, Task
+from .models import User, Project, Task # User model needed for profile update
 from .decorators import admin_required
 
 # Import Flask-Login utilities
@@ -52,6 +53,7 @@ def register():
                         email=form.email.data,
                         password_hash=hashed_password,
                         is_admin=is_first_user) # Make first user admin
+                        # Theme will use default from model definition
             user.save()
 
             flash(f'Account created for {form.username.data}! You can now log in.', 'success')
@@ -101,7 +103,6 @@ def dashboard():
     """User dashboard."""
     if current_user.is_admin:
         # Admin Dashboard: Show project overview, user stats, etc.
-        # Ensure templates use url_for('main.project_detail') etc.
         projects = Project.objects.order_by('-created_at')
         tasks = Task.objects.order_by('-created_at') # Or filter by status
         users = User.objects.order_by('username')
@@ -109,9 +110,63 @@ def dashboard():
                                projects=projects, tasks=tasks, users=users)
     else:
         # Regular User Dashboard: Show assigned tasks
-        # Ensure templates use url_for('main.task_detail') etc.
         assigned_tasks = Task.objects(assigned_to=current_user).order_by('due_date', 'status')
         return render_template('dashboard.html', title='My Dashboard', assigned_tasks=assigned_tasks)
+
+
+# --- NEW PROFILE ROUTES ---
+
+@main_routes.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """Displays and handles updates for the user's profile."""
+    # Pass original username/email to form for validation checks
+    form = UpdateProfileForm(
+        original_username=current_user.username,
+        original_email=current_user.email
+    )
+    if form.validate_on_submit():
+        try:
+            # Update user fields if they changed
+            if current_user.username != form.username.data:
+                current_user.username = form.username.data
+            if current_user.email != form.email.data:
+                current_user.email = form.email.data
+
+            # Update theme preference
+            if current_user.theme != form.theme.data:
+                current_user.theme = form.theme.data
+
+            current_user.save() # Save all changes
+            flash('Your profile has been updated successfully!', 'success')
+            log.info(f"User '{current_user.username}' updated profile. Theme set to '{current_user.theme}'.")
+            return redirect(url_for('main.profile')) # Redirect back to profile page
+
+        except NotUniqueError:
+             flash('Update failed. The chosen username or email is already in use by another account.', 'danger')
+        except MongoValidationError as e:
+            log.error(f"Validation error updating profile for user {current_user.username}: {e}", exc_info=True)
+            flash(f'Update failed due to a validation error: {e}', 'danger')
+        except Exception as e:
+            log.error(f"Unexpected error updating profile for user {current_user.username}: {e}", exc_info=True)
+            flash('An unexpected error occurred while updating your profile.', 'danger')
+
+    elif request.method == 'GET':
+        # Pre-populate form with current user data on initial load
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+        # Ensure theme is loaded correctly, handling potential None if user predates field
+        form.theme.data = getattr(current_user, 'theme', None) or form.theme.default
+
+    elif request.method == 'POST' and not form.validate_on_submit():
+         # Log form errors if validation fails on POST
+         log.warning(f"Profile update form validation failed for user {current_user.username}: {form.errors}")
+
+
+    return render_template('profile.html', title='My Profile', form=form)
+
+# --- End Profile Routes ---
+
 
 # --- Project Routes ---
 
@@ -119,7 +174,6 @@ def dashboard():
 @login_required
 def list_projects():
     """Lists all projects."""
-    # Ensure template uses url_for('main.project_detail')
     projects = Project.objects.order_by('-created_at')
     return render_template('projects.html', title='Projects', projects=projects)
 
@@ -151,7 +205,6 @@ def create_project():
 @login_required
 def project_detail(project_id):
     """Shows details of a specific project and its tasks."""
-    # Ensure template uses url_for('main.create_task'), url_for('main.task_detail')
     project = Project.objects(pk=project_id).first_or_404()
     tasks = Task.objects(project=project).order_by('status', 'due_date')
     return render_template('project_detail.html', title=project.name, project=project, tasks=tasks)
@@ -223,7 +276,6 @@ def task_detail(task_id):
              log.error(f"Unexpected error updating task {task_id} status: {e}", exc_info=True)
              flash(f'An unexpected error occurred while updating status.', 'danger')
 
-    # Ensure template uses url_for('main.project_detail')
     return render_template('task_detail.html', title=task.title, task=task, form=form, can_update=can_update)
 
 
@@ -234,7 +286,6 @@ def task_detail(task_id):
 @admin_required
 def admin_console():
     """Admin console main page."""
-    # Ensure template uses url_for('main.admin_list_users') etc.
     user_count = User.objects.count()
     project_count = Project.objects.count()
     task_count = Task.objects.count()
@@ -246,7 +297,6 @@ def admin_console():
 @admin_required
 def admin_list_users():
     """Lists all users for the admin."""
-    # Ensure template uses url_for('main.admin_toggle_admin')
     users = User.objects.order_by('username')
     return render_template('admin/users.html', title='Manage Users', users=users)
 
@@ -291,9 +341,3 @@ def internal_error(error):
     log.error(f"500 Internal Server Error for URL: {request.url}", exc_info=error)
     # db.session.rollback() # Not needed for MongoEngine usually
     return render_template('errors/500.html'), 500
-
-# You can add more specific error handlers if needed (e.g., 403 Forbidden)
-# @main_routes.app_errorhandler(403)
-# def forbidden_error(error):
-#     log.warning(f"403 Forbidden error for URL: {request.url} by user '{current_user.username if current_user.is_authenticated else 'anonymous'}' - {error}")
-#     return render_template('errors/403.html'), 403

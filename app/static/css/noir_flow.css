@@ -1,0 +1,171 @@
+/* app/static/css/noir_flow.css */
+/* --- Noir Flow Theme --- */
+
+body {
+    background-color: #1a1a1a; /* Very dark gray/off-black */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    color: #cccccc; /* Light gray text */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main.container {
+    flex-grow: 1;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+    width: 95%;
+}
+
+.form-container,
+.dashboard-admin,
+.dashboard-user,
+.project-list li,
+.task-list .task-item,
+.admin-sections section,
+.project-detail-box,
+.task-detail-box,
+.admin-console-box
+{
+    background-color: rgba(40, 40, 40, 0.85); /* Dark panel, slightly transparent */
+    padding: 25px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    border: 1px solid #383838; /* Subtle dark border */
+}
+
+.project-list, .task-list { list-style: none; padding-left: 0; }
+.project-list li, .task-list .task-item {
+    border-left-width: 4px; border-left-style: solid; padding: 15px; margin-bottom: 15px;
+}
+
+.navbar {
+    background-color: rgba(20, 20, 20, 0.9); /* Very dark navbar */
+    padding: 12px 25px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+    border-bottom: 1px solid #333333;
+}
+.navbar-brand {
+    color: #00bfa5; /* Teal accent */
+    font-weight: bold; font-size: 1.8em; text-decoration: none; text-shadow: none;
+}
+.navbar ul li a {
+    color: #dddddd; /* Lighter gray links */
+    text-decoration: none; padding: 8px 12px; border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+.navbar ul li a:hover, .navbar ul li a.active {
+    background-color: #333333;
+    color: #ffffff;
+    text-shadow: none;
+}
+.navbar ul li span { color: #aaaaaa; margin-right: 15px; padding: 8px 0; }
+.navbar ul li.dropdown ul.dropdown-content {
+    background-color: rgba(35, 35, 35, 0.98);
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.3);
+    border: 1px solid #444444;
+}
+.navbar ul li.dropdown ul.dropdown-content li a { color: #dddddd; }
+.navbar ul li.dropdown ul.dropdown-content li a:hover { background-color: #444444; color: #ffffff; }
+
+/* Forms */
+.form-container { max-width: 600px; margin: 40px auto; }
+.form-group { margin-bottom: 20px; }
+.form-group label { color: #bbbbbb; font-weight: bold; }
+
+.form-control,
+select.form-control,
+textarea.form-control {
+    width: 95%; padding: 12px;
+    background-color: #2a2a2a; /* Dark input background */
+    border: 1px solid #444444; /* Darker border */
+    border-radius: 4px;
+    color: #dddddd; /* Light text */
+    font-size: 1em;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+select.form-control {
+    color: #333333; /* Needs dark text for light OS dropdown */
+    background-color: #2a2a2a; /* Keep box dark */
+    /* Custom arrow (LIGHT for dark box) */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cccccc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px;
+    -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 2.5rem;
+}
+/* Options still use default OS light background, so text must be dark */
+select.form-control option { background-color: #ffffff; color: #333333; }
+
+.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus {
+    outline: none;
+    border-color: #00bfa5; /* Teal focus border */
+    box-shadow: 0 0 8px rgba(0, 191, 165, 0.4);
+}
+select.form-control:focus { color: #333333; } /* Keep text dark */
+textarea.form-control { min-height: 100px; resize: vertical; }
+.form-check { color: #bbbbbb; }
+.form-check input[type="checkbox"], .form-check input[type="radio"] { margin-right: 10px; width: auto; flex-shrink: 0; filter: invert(90%) hue-rotate(180deg); /* Style checkbox */ }
+.form-check label { margin-bottom: 0; font-weight: normal; }
+
+/* Buttons */
+.btn { padding: 10px 20px; border-radius: 4px; font-size: 1em; font-weight: bold; }
+.btn-primary { background-color: #008a75; color: #ffffff; border: 1px solid #007a65; } /* Darker Teal */
+.btn-primary:hover { background-color: #00bfa5; border-color: #00a88f; box-shadow: 0 0 8px rgba(0, 191, 165, 0.5); }
+.btn-secondary { background-color: #444444; color: #dddddd; border: 1px solid #555555; }
+.btn-secondary:hover { background-color: #555555; border-color: #666666; }
+.btn-danger { background-color: #a94442; color: #fff; border-color: #993432; } /* Darker red */
+.btn-danger:hover { background-color: #c0392b; border-color: #a94442; }
+/* Active tag example */
+span.active-tag { background-color: #004d40; color: #a7ffeb; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; border: 1px solid #007a65; }
+
+/* Statuses */
+.status-to-do { border-left-color: #555555; } /* Dark Gray */
+.status-in-progress { border-left-color: #9c27b0; } /* Purple Accent */
+.status-blocked { border-left-color: #a94442; }
+.status-in-review { border-left-color: #00bfa5; } /* Teal */
+.status-done { border-left-color: #388e3c; } /* Dark Green */
+
+span.status-to-do { background-color: #555555; color: #ccc; }
+span.status-in-progress { background-color: #9c27b0; color: #fff; }
+span.status-blocked { background-color: #a94442; color: #fff; }
+span.status-in-review { background-color: #00bfa5; color: #000; }
+span.status-done { background-color: #388e3c; color: #fff; }
+
+/* Admin Table */
+.user-table { background-color: rgba(40, 40, 40, 0.7); border-radius: 4px; overflow: hidden; }
+.user-table th, .user-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #444444; }
+.user-table th { background-color: #333333; color: #00bfa5; font-weight: bold; }
+.user-table tr:last-child td { border-bottom: none; }
+.user-table tr:hover { background-color: #3a3a3a; }
+
+/* Footer */
+footer { text-align: center; padding: 20px; margin-top: auto; color: #aaaaaa; font-size: 0.9em; background-color: rgba(20, 20, 20, 0.9); }
+
+/* Errors */
+.errors small { color: #e77; font-weight: bold; }
+.form-control.is-invalid { border-color: #a94442; box-shadow: 0 0 8px rgba(169, 68, 66, 0.5); }
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 { color: #dddddd; font-weight: bold; margin-bottom: 15px; }
+h1 { font-size: 2.0em; } h2 { font-size: 1.6em; } h3 { font-size: 1.4em; }
+
+/* Links */
+a { color: #00bfa5; text-decoration: none; }
+a:hover { color: #3ce7c6; }
+
+/* Responsive overrides - Adjust as needed */
+@media (max-width: 768px) {
+    h1 { font-size: 1.6em; } h2 { font-size: 1.4em; } h3 { font-size: 1.2em; }
+}

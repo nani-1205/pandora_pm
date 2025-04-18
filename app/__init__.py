@@ -2,7 +2,7 @@
 import os
 from flask import Flask
 from flask_mongoengine import MongoEngine
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user # Import current_user proxy here
 from flask_bcrypt import Bcrypt
 from config import Config
 import datetime
@@ -10,6 +10,8 @@ import logging
 
 # --- Import the setup function ---
 from .db_setup import setup_mongodb, ConfigurationError
+# --- Import theme config from models ---
+from .models import DEFAULT_THEME, AVAILABLE_THEMES # Import theme constants
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
@@ -24,7 +26,12 @@ bcrypt = Bcrypt()
 def load_user(user_id):
     # Import models here only when needed to avoid potential early import issues
     from .models import User
-    return User.objects(pk=user_id).first()
+    # Use try-except for robustness, e.g., if user_id is invalid format
+    try:
+        return User.objects(pk=user_id).first()
+    except Exception as e:
+        log.error(f"Error loading user {user_id}: {e}", exc_info=True)
+        return None
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
@@ -44,8 +51,6 @@ def create_app(config_class=Config):
             'host': app_mongo_uri,
             'connect': False # Explicitly set connect=False initially, MongoEngine connects on first query
         }
-        # Alternatively, if using MONGODB_HOST directly was intended (check Flask-MongoEngine docs):
-        # app.config['MONGODB_HOST'] = app_mongo_uri
 
     except ConfigurationError as e:
         log.error(f"CRITICAL: MongoDB configuration error: {e}")
@@ -69,26 +74,40 @@ def create_app(config_class=Config):
 
 
     # Configure Flask-Login
-    login_manager.login_view = 'main.login' # <<<--- Use blueprint name here
+    login_manager.login_view = 'main.login' # Use blueprint name
     login_manager.login_message_category = 'info'
     login_manager.login_message = "Please log in to access this page."
 
     with app.app_context():
-        # Register context processors here if needed
+        # --- Context Processors ---
         @app.context_processor
         def inject_now():
            return {'now': datetime.datetime.utcnow()}
 
-        # --- Register Blueprints ---
+        @app.context_processor
+        def inject_theme():
+            """Injects the current user's theme CSS filename into templates."""
+            try:
+                # current_user is available within app context after login_manager init
+                if current_user.is_authenticated and hasattr(current_user, 'theme') and current_user.theme in AVAILABLE_THEMES:
+                    theme_file = f"css/{current_user.theme}.css"
+                else:
+                    # Default theme for anonymous users or if user theme is invalid/missing
+                    theme_file = f"css/{DEFAULT_THEME}.css"
+            except Exception as e:
+                # Fallback in case of unexpected error (e.g., current_user proxy issue)
+                log.error(f"Error injecting theme: {e}", exc_info=True)
+                theme_file = f"css/{DEFAULT_THEME}.css"
+            return dict(current_theme_css=theme_file)
+        # --- End Context Processors ---
+
         log.info("Registering blueprints...")
         from .routes import main_routes # Import the blueprint instance
         app.register_blueprint(main_routes)
-        # If you had other blueprints (e.g., for API), register them here too
-        # from .api import api_bp
-        # app.register_blueprint(api_bp, url_prefix='/api')
         log.info("Blueprints registered.")
 
-        # Perform check to ensure DB connection works with app credentials
+        # --- Perform initial DB connection test ---
+        # Moved the import inside the try block to ensure models are loaded
         try:
             log.info("Performing initial DB connection test with app credentials...")
             from .models import User # Import here for the check
@@ -99,6 +118,7 @@ def create_app(config_class=Config):
             log.error(f"Check connection settings: {app.config.get('MONGODB_SETTINGS', 'Not Set')}")
             log.error("Verify firewall rules, user permissions on the database, and authSource.")
             raise SystemExit(f"Failed DB connection test: {e}") from e
+        # --- End DB connection test ---
 
-        log.info("Application creation completed.")
-        return app
+    log.info("Application creation completed.")
+    return app

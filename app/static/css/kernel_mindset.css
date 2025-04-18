@@ -1,0 +1,170 @@
+/* app/static/css/kernel_mindset.css */
+/* --- Kernel Mindset Theme --- */
+
+body {
+    background-color: #1e1e1e; /* Dark terminal background */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    color: #d4d4d4; /* Light gray/off-white text */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Monospace font */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main.container {
+    flex-grow: 1;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+    width: 95%;
+}
+
+.form-container,
+.dashboard-admin,
+.dashboard-user,
+.project-list li,
+.task-list .task-item,
+.admin-sections section,
+.project-detail-box,
+.task-detail-box,
+.admin-console-box
+{
+    background-color: rgba(30, 30, 30, 0.9); /* Slightly lighter dark panel */
+    padding: 25px;
+    border-radius: 4px; /* Sharper corners */
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border: 1px solid #444444; /* Slightly more visible border */
+}
+
+.project-list, .task-list { list-style: none; padding-left: 0; }
+.project-list li, .task-list .task-item {
+    border-left-width: 3px; border-left-style: solid; padding: 15px; margin-bottom: 15px;
+}
+
+.navbar {
+    background-color: rgba(15, 15, 15, 0.95); /* Very dark */
+    padding: 10px 25px; /* Slightly less padding */
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+    border-bottom: 1px solid #3a3a3a;
+}
+.navbar-brand {
+    color: #4ec9b0; /* Terminal teal/green */
+    font-weight: bold; font-size: 1.6em; text-decoration: none; text-shadow: none;
+}
+.navbar ul li a {
+    color: #cccccc;
+    text-decoration: none; padding: 6px 10px; border-radius: 3px; /* Smaller padding/radius */
+    transition: background-color 0.2s, color 0.2s;
+}
+.navbar ul li a:hover, .navbar ul li a.active {
+    background-color: #333333;
+    color: #4ec9b0; /* Highlight color */
+    text-shadow: none;
+}
+.navbar ul li span { color: #9cdcfe; margin-right: 15px; padding: 6px 0; } /* Terminal blue */
+.navbar ul li.dropdown ul.dropdown-content {
+    background-color: rgba(30, 30, 30, 0.98);
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+    border: 1px solid #444444;
+}
+.navbar ul li.dropdown ul.dropdown-content li a { color: #cccccc; }
+.navbar ul li.dropdown ul.dropdown-content li a:hover { background-color: #444444; color: #4ec9b0; }
+
+/* Forms */
+.form-container { max-width: 600px; margin: 40px auto; }
+.form-group { margin-bottom: 18px; } /* Slightly less spacing */
+.form-group label { color: #9cdcfe; font-weight: bold; } /* Terminal blue label */
+
+.form-control,
+select.form-control,
+textarea.form-control {
+    width: 95%; padding: 10px; /* Slightly less padding */
+    background-color: #252526; /* Editor-like dark background */
+    border: 1px solid #4a4a4a;
+    border-radius: 3px;
+    color: #d4d4d4; /* Light text */
+    font-size: 0.95em; /* Slightly smaller font */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Ensure monospace */
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+select.form-control {
+    color: #333333; /* Still need dark text for light OS dropdown */
+    background-color: #252526;
+    /* Custom arrow (LIGHT for dark box) */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cccccc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px;
+    -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 2.5rem;
+}
+select.form-control option { background-color: #ffffff; color: #333333; }
+.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus {
+    outline: none;
+    border-color: #4ec9b0; /* Teal focus */
+    box-shadow: 0 0 6px rgba(78, 201, 176, 0.4);
+}
+select.form-control:focus { color: #333333; }
+textarea.form-control { min-height: 90px; resize: vertical; }
+.form-check { color: #d4d4d4; }
+.form-check input[type="checkbox"], .form-check input[type="radio"] { margin-right: 8px; width: auto; flex-shrink: 0; filter: invert(90%) hue-rotate(180deg); }
+.form-check label { margin-bottom: 0; font-weight: normal; }
+
+/* Buttons */
+.btn { padding: 8px 18px; border-radius: 3px; font-size: 0.95em; font-weight: bold; }
+.btn-primary { background-color: #4ec9b0; color: #1e1e1e; border: 1px solid #3dc0a0; } /* Teal */
+.btn-primary:hover { background-color: #3dc0a0; border-color: #2db090; box-shadow: 0 0 8px rgba(78, 201, 176, 0.5); }
+.btn-secondary { background-color: #444444; color: #d4d4d4; border: 1px solid #555555; }
+.btn-secondary:hover { background-color: #555555; border-color: #666666; }
+.btn-danger { background-color: #ce9178; color: #1e1e1e; border-color: #be8168; } /* Terminal "error" orange/brown */
+.btn-danger:hover { background-color: #be8168; border-color: #ae7158; }
+/* Active tag example */
+span.active-tag { background-color: #569cd6; color: #1e1e1e; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; }
+
+/* Statuses */
+.status-to-do { border-left-color: #666666; } /* Medium Gray */
+.status-in-progress { border-left-color: #569cd6; } /* Blue */
+.status-blocked { border-left-color: #ce9178; } /* Orange/Brown */
+.status-in-review { border-left-color: #c586c0; } /* Purple */
+.status-done { border-left-color: #6a9955; } /* Green */
+
+span.status-to-do { background-color: #666666; color: #ddd; }
+span.status-in-progress { background-color: #569cd6; color: #1e1e1e; }
+span.status-blocked { background-color: #ce9178; color: #1e1e1e; }
+span.status-in-review { background-color: #c586c0; color: #1e1e1e; }
+span.status-done { background-color: #6a9955; color: #1e1e1e; }
+
+/* Admin Table */
+.user-table { background-color: rgba(30, 30, 30, 0.8); border-radius: 4px; overflow: hidden; }
+.user-table th, .user-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #444444; }
+.user-table th { background-color: #252526; color: #4ec9b0; font-weight: bold; }
+.user-table tr:last-child td { border-bottom: none; }
+.user-table tr:hover { background-color: #3a3a3a; }
+
+/* Footer */
+footer { text-align: center; padding: 15px; margin-top: auto; color: #999999; font-size: 0.85em; background-color: rgba(15, 15, 15, 0.9); }
+
+/* Errors */
+.errors small { color: #f48771; font-weight: bold; } /* Brighter error red */
+.form-control.is-invalid { border-color: #ce9178; box-shadow: 0 0 8px rgba(206, 145, 120, 0.5); }
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 { color: #d4d4d4; font-weight: bold; margin-bottom: 15px; }
+h1 { font-size: 1.8em; } h2 { font-size: 1.5em; } h3 { font-size: 1.3em; }
+
+/* Links */
+a { color: #4ec9b0; text-decoration: none; }
+a:hover { color: #78e0c8; }
+
+/* Responsive overrides - Adjust as needed */
+@media (max-width: 768px) {
+    h1 { font-size: 1.5em; } h2 { font-size: 1.3em; } h3 { font-size: 1.1em; }
+}

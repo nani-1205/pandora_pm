@@ -3,28 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- !!! PANDORA THEME - Link CSS !!! -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Link THEME CSS Dynamically -->
+    <link rel="stylesheet" href="{{ url_for('static', filename=current_theme_css) }}">
     <!-- Add other CSS frameworks or libraries if needed (e.g., Bootstrap) -->
-    <title>{{ title }} - Pandora PM</title> {# <-- UPDATED #}
+    <title>{{ title }} - Pandora PM</title>
 </head>
-<body> <!-- Add classes here for Pandora theme -->
+<body> <!-- Consider adding theme class: <body class="theme-{{ current_user.theme if current_user.is_authenticated else DEFAULT_THEME }}"> -->
     <header>
        {% include 'partials/_navbar.html' %}
     </header>
 
-    <main class="container"> <!-- Add container class or similar -->
+    <main class="container">
         {% include 'partials/_flashes.html' %}
         {% block content %}{% endblock %}
     </main>
 
     <footer>
-        <!-- Footer content -->
-        <p>© {{ now.year }} Pandora PM</p> {# <-- UPDATED #}
+        <p>© {{ now.year }} Pandora PM</p>
     </footer>
 
-    <!-- Optional JavaScript -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    <!-- Add other JS libraries if needed -->
 </body>
 </html>
