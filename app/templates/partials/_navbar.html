@@ -1,24 +1,24 @@
 <nav class="navbar"> <!-- Style this navbar with Avatar theme -->
-    <a href="{{ url_for('index') }}" class="navbar-brand">Avatar PM</a>
+    <a href="{{ url_for('main.index') }}" class="navbar-brand">Avatar PM</a> {# <-- UPDATED #}
     <ul>
         {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('list_projects') }}">Projects</a></li>
+            <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li> {# <-- UPDATED #}
+            <li><a href="{{ url_for('main.list_projects') }}">Projects</a></li> {# <-- UPDATED #}
             {% if current_user.is_admin %}
                 <li class="dropdown"> <!-- Example dropdown for Admin -->
                     <a href="#">Admin Menu</a>
                     <ul class="dropdown-content">
-                       <li><a href="{{ url_for('admin_console') }}">Admin Console</a></li>
-                       <li><a href="{{ url_for('admin_list_users') }}">Manage Users</a></li>
-                       <li><a href="{{ url_for('create_project') }}">New Project</a></li>
+                       <li><a href="{{ url_for('main.admin_console') }}">Admin Console</a></li> {# <-- UPDATED #}
+                       <li><a href="{{ url_for('main.admin_list_users') }}">Manage Users</a></li> {# <-- UPDATED #}
+                       <li><a href="{{ url_for('main.create_project') }}">New Project</a></li> {# <-- UPDATED #}
                     </ul>
                 </li>
             {% endif %}
             <li><span>Hi, {{ current_user.username }}!</span></li>
-            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            <li><a href="{{ url_for('main.logout') }}">Logout</a></li> {# <-- UPDATED #}
         {% else %}
-            <li><a href="{{ url_for('login') }}">Login</a></li>
-            <li><a href="{{ url_for('register') }}">Register</a></li>
+            <li><a href="{{ url_for('main.login') }}">Login</a></li> {# <-- UPDATED #}
+            <li><a href="{{ url_for('main.register') }}">Register</a></li> {# <-- UPDATED #}
         {% endif %}
     </ul>
 </nav>

@@ -17,9 +17,9 @@
     <section class="admin-actions">
         <h2>Management Actions</h2>
         <ul>
-            <li><a href="{{ url_for('admin_list_users') }}">Manage Users</a></li>
-            <li><a href="{{ url_for('list_projects') }}">View/Manage Projects</a></li>
-            <li><a href="{{ url_for('create_project') }}">Create New Project</a></li>
+            <li><a href="{{ url_for('main.admin_list_users') }}">Manage Users</a></li> {# <-- UPDATED #}
+            <li><a href="{{ url_for('main.list_projects') }}">View/Manage Projects</a></li> {# <-- UPDATED #}
+            <li><a href="{{ url_for('main.create_project') }}">Create New Project</a></li> {# <-- UPDATED #}
             <!-- Add links to other admin functions as needed -->
         </ul>
     </section>

@@ -3,7 +3,7 @@
 {% block content %}
 <div class="form-container"> <!-- Style this container -->
     <h2>Login</h2>
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="POST" action="{{ url_for('main.login') }}"> {# <-- UPDATED #}
         {{ form.hidden_tag() }} <!-- CSRF token -->
         <div class="form-group">
             {{ form.email.label }}
@@ -30,7 +30,7 @@
             {{ form.submit(class="btn btn-primary") }}
         </div>
     </form>
-    <p>Need an account? <a href="{{ url_for('register') }}">Sign Up</a></p>
+    <p>Need an account? <a href="{{ url_for('main.register') }}">Sign Up</a></p> {# <-- UPDATED #}
     <!-- Add forgot password link later if needed -->
 </div>
 {% endblock %}

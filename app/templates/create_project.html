@@ -3,7 +3,7 @@
 {% block content %}
 <div class="form-container">
     <h2>Create New Project</h2>
-    <form method="POST" action="{{ url_for('create_project') }}">
+    <form method="POST" action="{{ url_for('main.create_project') }}"> {# <-- UPDATED #}
         {{ form.hidden_tag() }}
         <div class="form-group">
             {{ form.name.label }}

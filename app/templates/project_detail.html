@@ -9,14 +9,14 @@
 
 <h2>Tasks in this Project</h2>
 {% if current_user.is_admin %}
-<p><a href="{{ url_for('create_task', project_id=project.id) }}" class="btn btn-secondary">Add New Task</a></p>
+<p><a href="{{ url_for('main.create_task', project_id=project.id) }}" class="btn btn-secondary">Add New Task</a></p> {# <-- UPDATED #}
 {% endif %}
 
 {% if tasks %}
     <ul class="task-list">
     {% for task in tasks %}
         <li class="task-item status-{{ task.status|lower|replace(' ', '-') }}">
-             <a href="{{ url_for('task_detail', task_id=task.id) }}">{{ task.title }}</a>
+             <a href="{{ url_for('main.task_detail', task_id=task.id) }}">{{ task.title }}</a> {# <-- UPDATED #}
              - Assigned to: {{ task.assigned_to.username }}
              - Status: {{ task.status }}
              {% if task.due_date %} - Due: {{ task.due_date.strftime('%Y-%m-%d') }}{% endif %}
@@ -27,6 +27,6 @@
     <p>No tasks have been added to this project yet.</p>
 {% endif %}
 
-<p><a href="{{ url_for('list_projects') }}">Back to Projects List</a></p>
+<p><a href="{{ url_for('main.list_projects') }}">Back to Projects List</a></p> {# <-- UPDATED #}
 
 {% endblock %}

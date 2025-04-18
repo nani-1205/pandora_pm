@@ -3,14 +3,14 @@
 {% block content %}
 <h1>Projects</h1>
 {% if current_user.is_admin %}
-<p><a href="{{ url_for('create_project') }}" class="btn btn-primary">Create New Project</a></p>
+<p><a href="{{ url_for('main.create_project') }}" class="btn btn-primary">Create New Project</a></p> {# <-- UPDATED #}
 {% endif %}
 
 {% if projects %}
     <ul class="project-list">
         {% for project in projects %}
         <li>
-            <h2><a href="{{ url_for('project_detail', project_id=project.id) }}">{{ project.name }}</a></h2>
+            <h2><a href="{{ url_for('main.project_detail', project_id=project.id) }}">{{ project.name }}</a></h2> {# <-- UPDATED #}
             <p>{{ project.description | truncate(150) }}</p>
             <small>Created on: {{ project.created_at.strftime('%Y-%m-%d') }} by {{ project.created_by.username }}</small>
         </li>
