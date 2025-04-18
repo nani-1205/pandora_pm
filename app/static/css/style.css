@@ -49,7 +49,7 @@ main.container { /* Specifically target the main container if needed */
     border-radius: 10px; /* Slightly more rounded corners */
     margin-bottom: 25px; /* Spacing between panels */
     box-shadow: 0 0 18px rgba(152, 246, 252, 0.25); /* Slightly stronger glow */
-    border: 1px solid rgba(152, 246, 252, 0.1); /* Subtle border */
+    /* border: 1px solid rgba(152, 246, 252, 0.1); */ /* Subtle border REMOVED */
 }
 
 /* Ensure list items don't double-background if the list itself has a background */
@@ -62,8 +62,8 @@ main.container { /* Specifically target the main container if needed */
 .task-list .task-item {
     /* Reset background if parent has one, or adjust transparency */
     /* background-color: rgba(28, 37, 65, 0.75); */ /* Slightly different shade/transparency? */
-    border-left-width: 5px;
-    border-left-style: solid;
+    border-left-width: 5px; /* Keep status border */
+    border-left-style: solid; /* Keep status border */
     padding: 15px; /* Adjust padding for list items */
     margin-bottom: 15px; /* Adjust spacing */
 }
@@ -387,7 +387,7 @@ footer {
     color: #a7d6e8;
     font-size: 0.9em;
     background-color: rgba(5, 10, 20, 0.85); /* Semi-transparent footer */
-    /* Removed border-top */
+    /* border-top removed */
 }
 
 /* Errors */
