@@ -1,5 +1,7 @@
 # app/models.py
-from .extensions import db, bcrypt # Import from extensions
+# --- Import extensions from the new file ---
+from .extensions import db, bcrypt
+# --- Other imports ---
 from flask_login import UserMixin
 import datetime
 
@@ -25,11 +27,18 @@ class User(db.Document, UserMixin):
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
     theme = db.StringField(choices=AVAILABLE_THEMES, default=DEFAULT_THEME, required=True)
 
+    meta = {
+        'indexes': [
+            'email', # Index for login lookup
+            'username' # Index for uniqueness check
+        ]
+    }
+
     def set_password(self, password):
-        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8') # Uses bcrypt from extensions
 
     def check_password(self, password):
-        return bcrypt.check_password_hash(self.password_hash, password)
+        return bcrypt.check_password_hash(self.password_hash, password) # Uses bcrypt from extensions
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', Admin: {self.is_admin})"
@@ -40,11 +49,18 @@ class Project(db.Document):
     description = db.StringField()
     created_by = db.ReferenceField(User, required=True)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-    meta = {'indexes': ['name']}
+
+    meta = {
+        'indexes': [
+            'name', # Index for name lookup/uniqueness if needed
+            'created_by' # Index for finding projects by user
+        ]
+    }
+
     def __repr__(self):
         return f"Project('{self.name}')"
 
-# --- WorkPackage Model (NEW) ---
+# --- WorkPackage Model ---
 class WorkPackage(db.Document):
     name = db.StringField(required=True, max_length=150)
     description = db.StringField()
@@ -54,12 +70,17 @@ class WorkPackage(db.Document):
     end_date = db.DateTimeField(null=True, blank=True)   # Optional end date
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
 
-    meta = {'indexes': ['project', 'name']}
+    meta = {
+        'indexes': [
+            'project', # Index for finding WPs by project
+            ('project', 'name') # Compound index for project-specific name lookup
+        ]
+    }
 
     def __repr__(self):
         return f"WorkPackage('{self.name}', Project: '{self.project.name}')"
 
-# --- Milestone Model (NEW) ---
+# --- Milestone Model ---
 class Milestone(db.Document):
     name = db.StringField(required=True, max_length=150)
     project = db.ReferenceField(Project, required=True, reverse_delete_rule=db.CASCADE)
@@ -68,25 +89,40 @@ class Milestone(db.Document):
     created_by = db.ReferenceField(User, required=True)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
 
-    meta = {'indexes': ['project', ('target_date', -1)]} # Index by project and date descending
+    # --- CORRECTED META ---
+    meta = {
+        'indexes': [
+            # Index milestones within a project, sorted newest target date first
+            ('project', '-target_date')
+        ]
+    }
 
     def __repr__(self):
         return f"Milestone('{self.name}', Project: '{self.project.name}', Target: {self.target_date})"
 
 
-# --- Task Model (UPDATED) ---
+# --- Task Model ---
 class Task(db.Document):
     title = db.StringField(required=True, max_length=200)
     description = db.StringField()
     status = db.StringField(choices=TASK_STATUS_CHOICES, default='To Do', required=True)
     project = db.ReferenceField(Project, required=True, reverse_delete_rule=db.CASCADE)
-    # --- NEW: Optional link to WorkPackage ---
     work_package = db.ReferenceField(WorkPackage, null=True, blank=True, reverse_delete_rule=db.NULLIFY)
     assigned_to = db.ReferenceField(User, required=True, reverse_delete_rule=db.NULLIFY)
     created_by = db.ReferenceField(User, required=True)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
     due_date = db.DateTimeField(null=True, blank=True)
-    meta = {'indexes': ['project', 'assigned_to', 'status', 'work_package']} # Add index for WP
+
+    meta = {
+        'indexes': [
+            'project',          # Find tasks by project
+            'assigned_to',      # Find tasks by assignee
+            ('project', 'status'), # Find tasks by status within a project
+            ('project', 'work_package'), # Find tasks by WP within a project
+            ('assigned_to', 'status'), # Find tasks by status for a user (for dashboard)
+            ('assigned_to', 'due_date') # Find tasks by due date for a user
+        ]
+    }
 
     def __repr__(self):
         wp_name = f", WP: '{self.work_package.name}'" if self.work_package else ""
