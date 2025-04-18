@@ -1,5 +1,5 @@
 /* app/static/css/style.css */
-/* --- AVATAR THEME STYLES --- */
+/* --- PANDORA THEME STYLES --- */
 
 body {
     /* --- Background Image --- */
@@ -387,7 +387,7 @@ footer {
     color: #a7d6e8;
     font-size: 0.9em;
     background-color: rgba(5, 10, 20, 0.85); /* Semi-transparent footer */
-    border-top: 1px solid rgba(152, 246, 252, 0.1);
+    /* Removed border-top */
 }
 
 /* Errors */
