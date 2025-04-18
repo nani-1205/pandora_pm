@@ -1,32 +1,96 @@
+<!-- app/templates/project_detail.html -->
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Project: {{ project.name }}</h1>
-<p><strong>Description:</strong> {{ project.description or 'No description provided.' }}</p>
-<p><small>Created on: {{ project.created_at.strftime('%Y-%m-%d') }} by {{ project.created_by.username }}</small></p>
+<div class="project-detail-box panel-box"> {# Optional class for styling #}
+    <h1>Project: {{ project.name }}</h1>
+    <p><strong>Description:</strong> {{ project.description or 'No description provided.' }}</p>
+    <p><small>Created on: {{ project.created_at.strftime('%Y-%m-%d') }} by {{ project.created_by.username }}</small></p>
+    {% if current_user.is_admin %}
+    <div class="project-actions" style="margin-bottom: 20px;">
+        {# Add Edit/Delete Project buttons if desired #}
+        <a href="{{ url_for('main.create_work_package', project_id=project.id) }}" class="btn btn-secondary btn-sm">New Work Package</a>
+        <a href="{{ url_for('main.create_milestone', project_id=project.id) }}" class="btn btn-secondary btn-sm">New Milestone</a>
+        <a href="{{ url_for('main.project_roadmap', project_id=project.id) }}" class="btn btn-info btn-sm">View Roadmap</a> {# Changed button style #}
+         <a href="{{ url_for('main.project_calendar', project_id=project.id) }}" class="btn btn-info btn-sm">View Calendar</a> {# Changed button style #}
+    </div>
+    {% endif %}
+</div>
 
-<hr>
-
-<h2>Tasks in this Project</h2>
-{% if current_user.is_admin %}
-<p><a href="{{ url_for('main.create_task', project_id=project.id) }}" class="btn btn-secondary">Add New Task</a></p> {# <-- UPDATED #}
-{% endif %}
-
-{% if tasks %}
-    <ul class="task-list">
-    {% for task in tasks %}
-        <li class="task-item status-{{ task.status|lower|replace(' ', '-') }}">
-             <a href="{{ url_for('main.task_detail', task_id=task.id) }}">{{ task.title }}</a> {# <-- UPDATED #}
-             - Assigned to: {{ task.assigned_to.username }}
-             - Status: {{ task.status }}
-             {% if task.due_date %} - Due: {{ task.due_date.strftime('%Y-%m-%d') }}{% endif %}
+{# --- Milestones Section --- #}
+<div class="milestones-box panel-box"> {# Optional class #}
+    <h2>Upcoming Milestones</h2>
+     {% if current_user.is_admin %}
+        <a href="{{ url_for('main.create_milestone', project_id=project.id) }}" class="btn btn-sm btn-outline-secondary float-right">Add Milestone</a> {# Example add button #}
+    {% endif %}
+    {% if milestones %}
+    <ul class="milestone-list list-unstyled" style="margin-top: 15px;"> {# Basic list #}
+        {% for milestone in milestones.limit(5) %} {# Show next 5 #}
+        <li style="margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+            <strong>{{ milestone.name }}</strong> - Target: <span style="font-weight:bold;">{{ milestone.target_date.strftime('%Y-%m-%d') }}</span>
+            {% if milestone.description %}<p><small>{{ milestone.description }}</small></p>{% endif %}
         </li>
-    {% endfor %}
+        {% endfor %}
+         {% if milestones | length > 5 %}
+             <p><a href="{{ url_for('main.project_roadmap', project_id=project.id) }}">View Full Roadmap...</a></p>
+         {% endif %}
     </ul>
-{% else %}
-    <p>No tasks have been added to this project yet.</p>
-{% endif %}
+    {% else %}
+        <p>No milestones defined yet.</p>
+    {% endif %}
+</div>
 
-<p><a href="{{ url_for('main.list_projects') }}">Back to Projects List</a></p> {# <-- UPDATED #}
+
+{# --- Tasks Section (Grouped by Work Package) --- #}
+<div class="tasks-box panel-box"> {# Optional class #}
+    <h2>Tasks</h2>
+     {% if current_user.is_admin %}
+        <a href="{{ url_for('main.create_task', project_id=project.id) }}" class="btn btn-primary float-right">Add New Task</a>
+    {% endif %}
+
+    {# Group tasks by Work Package #}
+    {% set tasks_by_wp = tasks | groupby('work_package') %}
+
+    {% for wp, wp_tasks in tasks_by_wp %}
+        {% if wp %} {# Tasks associated with a Work Package #}
+            <div class="work-package-group" style="margin-top: 25px; border-top: 1px solid rgba(128,128,128,0.3); padding-top: 15px;">
+                <h3>Work Package: {{ wp.name }}</h3>
+                 {% if wp.description %}<p><small>{{ wp.description }}</small></p>{% endif %}
+                 {% if wp.start_date or wp.end_date %}
+                    <p><small>
+                        {% if wp.start_date %}Start: {{ wp.start_date.strftime('%Y-%m-%d') }}{% endif %}
+                        {% if wp.end_date %} | End: {{ wp.end_date.strftime('%Y-%m-%d') }}{% endif %}
+                    </small></p>
+                 {% endif %}
+                {# Add Edit/Delete WP links here if needed for admin #}
+                <ul class="task-list">
+                    {% for task in wp_tasks %}
+                        {% include 'partials/_task_item.html' %} {# Use a partial for task display #}
+                    {% else %}
+                        <li><small>No tasks in this work package.</small></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %} {# Tasks not associated with any Work Package #}
+             <div class="work-package-group" style="margin-top: 25px; border-top: 1px solid rgba(128,128,128,0.3); padding-top: 15px;">
+                <h3>Tasks (No Work Package Assigned)</h3>
+                <ul class="task-list">
+                    {% for task in wp_tasks %}
+                         {% include 'partials/_task_item.html' %}
+                    {% else %}
+                         {# This case shouldn't happen if there were unassigned tasks, but good practice #}
+                         <li><small>No tasks found without a work package.</small></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% else %} {# No tasks at all in the project #}
+         <p>No tasks have been added to this project yet.</p>
+    {% endfor %}
+
+</div>
+
+
+<p style="margin-top: 30px;"><a href="{{ url_for('main.list_projects') }}">Back to Projects List</a></p>
 
 {% endblock %}

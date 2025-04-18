@@ -1,0 +1,109 @@
+<!-- app/templates/calendar.html -->
+{% extends "base.html" %}
+
+{% block head_extra %} {# Add an extra block in base.html's head if needed, or put directly #}
+    {# FullCalendar CSS #}
+    {# Option 1: Local File #}
+    <link href='{{ url_for('static', filename='vendor/fullcalendar/main.min.css') }}' rel='stylesheet' />
+    {# Option 2: CDN #}
+    {# <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/main.min.css' rel='stylesheet' /> #}
+
+    {# Basic CSS for event colors - place here or in theme css #}
+    <style>
+        #calendar { max-width: 1100px; margin: 20px auto; background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;} /* Give calendar area a background */
+        .fc-event { cursor: pointer; } /* Indicate events are clickable */
+        .fc-event, .fc-event-dot { /* Use theme variables or specific colors */ }
+        .event-task { background-color: #3498db; border-color: #2980b9; }
+        .event-milestone { background-color: #f39c12; border-color: #e67e22; }
+        /* .event-work-package { background-color: #9b59b6; border-color: #8e44ad; } */
+        .event-done { background-color: #2ecc71 !important; border-color: #27ae60 !important; opacity: 0.7; }
+        .event-overdue { border: 2px dashed #e74c3c !important; background-color: transparent; color: #e74c3c !important; }
+
+        /* Adjust link colors inside events if needed by theme */
+        .fc-event-title-container .fc-event-title, .fc-event-time { color: white !important; } /* Default white text */
+
+        /* --- Theme-specific overrides for calendar elements if needed --- */
+        /* Example for dark themes */
+        /* body.theme-noir_flow .fc .fc-button-primary, body.theme-kernel_mindset .fc .fc-button-primary { */
+        /*    background-color: #444; border-color: #555; color: #ccc; */
+        /* } */
+        /* body.theme-noir_flow .fc .fc-toolbar-title, body.theme-kernel_mindset .fc .fc-toolbar-title { */
+        /*    color: #ddd; */
+        /* } */
+        /* body.theme-noir_flow .fc .fc-daygrid-day-number, body.theme-kernel_mindset .fc .fc-daygrid-day-number { */
+        /*     color: #aaa; */
+        /* } */
+        /* --- End Theme Overrides --- */
+    </style>
+{% endblock %}
+
+
+{% block content %}
+<div class="calendar-container panel-box"> {# Optional class #}
+    <h1>{{ title }}</h1>
+    {% if project %}
+        <p>
+            <a href="{{ url_for('main.project_detail', project_id=project.id) }}">Back to Project</a> |
+            <a href="{{ url_for('main.project_roadmap', project_id=project.id) }}">View Roadmap</a>
+        </p>
+    {% else %}
+         <p><a href="{{ url_for('main.dashboard') }}">Back to Dashboard</a></p>
+    {% endif %}
+
+    {# Div where the calendar will be rendered #}
+    <div id='calendar'></div>
+
+</div>
+
+{# Add FullCalendar JS #}
+{# Option 1: Local File #}
+<script src='{{ url_for('static', filename='vendor/fullcalendar/main.min.js') }}'></script>
+{# Option 2: CDN #}
+{# <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/main.min.js'></script> #}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var eventsUrl = '{{ url_for("main.calendar_events", project_id=project.id if project else None) }}';
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,listWeek' // Removed timeGridDay for simplicity
+      },
+      events: {
+          url: eventsUrl,
+          failure: function() {
+            alert('There was an error while fetching events!');
+          }
+      },
+      editable: false,
+      selectable: false,
+      dayMaxEvents: true, // Show "more" link
+       eventTimeFormat: {
+            hour: 'numeric', minute: '2-digit', meridiem: 'short'
+       },
+       eventClick: function(info) {
+            // Prevent default browser navigation if URL exists
+            info.jsEvent.preventDefault();
+            if (info.event.url) {
+                // Open link in same tab
+                window.location.href = info.event.url;
+            }
+       },
+       loading: function(isLoading) {
+            // Optional: Show/hide a loading indicator element
+            var loadingEl = document.getElementById('calendar-loading'); // Add <div id="calendar-loading"></div> somewhere
+            if (loadingEl) {
+                 loadingEl.style.display = isLoading ? 'block' : 'none';
+            }
+        }
+    });
+
+    calendar.render();
+  });
+</script>
+
+{% endblock %}

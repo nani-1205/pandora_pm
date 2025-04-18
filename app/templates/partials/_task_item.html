@@ -1,0 +1,23 @@
+<!-- app/templates/partials/_task_item.html -->
+{# Expects 'task' variable in context #}
+<li class="task-item status-{{ task.status|lower|replace(' ', '-') }}">
+    {# Task Title as Link #}
+    <a href="{{ url_for('main.task_detail', task_id=task.id) }}">{{ task.title }}</a>
+
+    {# Task Metadata #}
+    <div class="task-meta" style="font-size: 0.85em; color: #aaa; margin-top: 4px;">
+        <span>Assigned to: <strong>{{ task.assigned_to.username }}</strong></span> |
+        <span>Status: <strong class="status-{{ task.status|lower|replace(' ', '-') }}">{{ task.status }}</strong></span>
+        {% if task.due_date %} | <span>Due: <strong>{{ task.due_date.strftime('%Y-%m-%d') }}</strong></span>{% endif %}
+    </div>
+
+    {# Optional: Task Description Snippet #}
+    {% if task.description %}
+        <p class="task-description-snippet" style="font-size: 0.9em; margin-top: 5px; color: #ccc;">
+            {{ task.description|truncate(100, True) }} {# Show ellipsis if truncated #}
+        </p>
+    {% endif %}
+
+    {# Optional: Add quick action buttons (like update status dropdown, delete) here later #}
+
+</li>
