@@ -1,5 +1,5 @@
 # app/models.py
-from . import db, bcrypt
+from app import db, bcrypt # Direct import from the app package
 from flask_login import UserMixin
 import datetime
 
@@ -33,7 +33,7 @@ class User(db.Document, UserMixin):
     password_hash = db.StringField(required=True)
     is_admin = db.BooleanField(default=False)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-    # --- NEW FIELD ---
+    # --- Theme Field ---
     theme = db.StringField(choices=AVAILABLE_THEMES, default=DEFAULT_THEME, required=True)
 
     # Flask-Login integration: The `id` property is automatically handled by MongoEngine's pk (primary key)
