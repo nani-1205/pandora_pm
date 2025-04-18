@@ -6,27 +6,25 @@ from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from config import Config
 import datetime
-import logging # Import logging
+import logging
 
 # --- Import the setup function ---
 from .db_setup import setup_mongodb, ConfigurationError
 
-logging.basicConfig(level=logging.INFO) # Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
+# Define extensions at the module level
 db = MongoEngine()
 login_manager = LoginManager()
 bcrypt = Bcrypt()
 
+# User loader callback for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
+    # Import models here only when needed to avoid potential early import issues
     from .models import User
     return User.objects(pk=user_id).first()
-
-# Optional: Context processor
-# @app.context_processor ## This needs the app instance, move inside create_app or register later
-# def inject_now():
-#    return {'now': datetime.datetime.utcnow()}
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
@@ -42,15 +40,18 @@ def create_app(config_class=Config):
 
         # --- Configure MongoEngine with the APPLICATION URI ---
         log.info("Configuring Flask-MongoEngine with application user URI.")
-        app.config['MONGODB_HOST'] = app_mongo_uri # Use the URI returned by setup
+        app.config['MONGODB_SETTINGS'] = { # Flask-MongoEngine uses MONGODB_SETTINGS dict
+            'host': app_mongo_uri,
+            'connect': False # Explicitly set connect=False initially, MongoEngine connects on first query
+        }
+        # Alternatively, if using MONGODB_HOST directly was intended (check Flask-MongoEngine docs):
+        # app.config['MONGODB_HOST'] = app_mongo_uri
 
     except ConfigurationError as e:
         log.error(f"CRITICAL: MongoDB configuration error: {e}")
-        # Decide how to handle this - exit, raise, return None? Exiting might be safest.
         raise SystemExit(f"MongoDB configuration error: {e}") from e
     except Exception as e:
         log.error(f"CRITICAL: Failed to setup or connect to MongoDB: {e}")
-        # Exit if DB connection is essential for the app to start
         raise SystemExit(f"Failed to setup/connect to MongoDB: {e}") from e
     # --- End MongoDB Setup ---
 
@@ -58,7 +59,7 @@ def create_app(config_class=Config):
     # Initialize extensions AFTER DB config is set
     log.info("Initializing Flask extensions...")
     try:
-        db.init_app(app) # Now db uses the app_mongo_uri
+        db.init_app(app) # Now db uses the configured settings
         login_manager.init_app(app)
         bcrypt.init_app(app)
         log.info("Flask extensions initialized.")
@@ -68,7 +69,7 @@ def create_app(config_class=Config):
 
 
     # Configure Flask-Login
-    login_manager.login_view = 'login'
+    login_manager.login_view = 'main.login' # <<<--- Use blueprint name here
     login_manager.login_message_category = 'info'
     login_manager.login_message = "Please log in to access this page."
 
@@ -78,21 +79,24 @@ def create_app(config_class=Config):
         def inject_now():
            return {'now': datetime.datetime.utcnow()}
 
-        # Import routes
-        log.info("Importing routes...")
-        from . import routes
-        log.info("Routes imported.")
+        # --- Register Blueprints ---
+        log.info("Registering blueprints...")
+        from .routes import main_routes # Import the blueprint instance
+        app.register_blueprint(main_routes)
+        # If you had other blueprints (e.g., for API), register them here too
+        # from .api import api_bp
+        # app.register_blueprint(api_bp, url_prefix='/api')
+        log.info("Blueprints registered.")
 
         # Perform check to ensure DB connection works with app credentials
         try:
             log.info("Performing initial DB connection test with app credentials...")
-            # A simple check like getting server status or accessing a model count
-            from .models import User # Import here
+            from .models import User # Import here for the check
             user_count = User.objects.count() # Example check
             log.info(f"DB connection test successful. Found {user_count} users.")
         except Exception as e:
             log.error(f"CRITICAL: Failed to connect/interact with MongoDB using application credentials: {e}")
-            log.error(f"Check connection string: {app.config.get('MONGODB_HOST', 'Not Set')}")
+            log.error(f"Check connection settings: {app.config.get('MONGODB_SETTINGS', 'Not Set')}")
             log.error("Verify firewall rules, user permissions on the database, and authSource.")
             raise SystemExit(f"Failed DB connection test: {e}") from e
 
