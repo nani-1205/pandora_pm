@@ -1,4 +1,4 @@
-<!-- app/templates/calendar.html - OPTION 1 -->
+<!-- app/templates/calendar.html - OPTION 2 -->
 {% extends "base.html" %}
 
 {% block head_extra %}
@@ -103,8 +103,8 @@
     var eventsUrl = '{{ url_for("main.calendar_events", project_id=project.id if project else None) }}';
     var newEventUrl = '{{ url_for("main.create_calendar_event_api") }}';
 
-    // --- OPTION 1: Try direct tojson filter ---
-    var currentProjectId = {{ project.id|tojson if project else 'null' }};
+    // --- OPTION 2: Force string conversion using %s format ---
+    var currentProjectId = {{ ('%s' % project.id)|tojson if project else 'null' }};
 
     function openModal(startStr, endStr, allDay) {
         modalTitle.textContent = 'Add New Event';
