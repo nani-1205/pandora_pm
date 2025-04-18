@@ -1,25 +1,30 @@
-{% extends "base.html" %}
-{% from 'tasks/_task_item.html' import render_dashboard_task with context %}
+{# ... extends and other imports ... #}
 
 {% block content %}
 <h1>Dashboard</h1>
 <p>Welcome back to the forests of Pandora, {{ current_user.username }}!</p>
+
+{# --- TEMPLATE DEBUG --- #}
+<p style="color: yellow; background: rgba(0,0,0,0.5); padding: 5px;">
+    DEBUG: Received {{ projects|length if projects is defined else 'UNDEFINED' }} projects in template.
+    {% if projects is defined and projects %} First project owner: {{ projects[0].owner_id }} {% endif %}
+</p>
+{# --- END TEMPLATE DEBUG --- #}
 
 <div class="row mt-4">
     <div class="col-md-7">
         <div class="card card-pandora">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>My Projects</span>
-                {# === HIDE BUTTON FOR NON-ADMINS === #}
                 {% if current_user.is_admin %}
                 <a href="{{ url_for('projects.new_project') }}" class="btn btn-sm btn-pandora-secondary">New Project</a>
                 {% endif %}
-                 {# === END HIDE === #}
             </div>
             <div class="card-body">
-                {% if projects %}
+                 {# Check if projects is defined AND not empty #}
+                {% if projects is defined and projects %}
                     <ul class="list-group list-group-flush">
-                        {% for project in projects[:5] %} {# Show first 5 projects #}
+                        {% for project in projects[:5] %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <a href="{{ url_for('projects.project_detail', project_id=project._id) }}">{{ project.name }}</a>
                                 <span class="badge rounded-pill status-{{ project.status|lower|replace(' ', '') }}">{{ project.status }}</span>
@@ -31,29 +36,33 @@
                     {% endif %}
                 {% else %}
                     <p>No active projects found. Time to start exploring!</p>
-                    {# === HIDE BUTTON FOR NON-ADMINS === #}
                     {% if current_user.is_admin %}
                     <a href="{{ url_for('projects.new_project') }}" class="btn btn-pandora mt-3">Create First Project</a>
                     {% endif %}
-                     {# === END HIDE === #}
                 {% endif %}
             </div>
         </div>
     </div>
-    <div class="col-md-5">
+    {# ... (rest of dashboard: upcoming tasks etc.) ... #}
+     <div class="col-md-5">
          <div class="card card-pandora">
-            <div class="card-header">My Upcoming Tasks</div> {# Changed Header #}
+            <div class="card-header">My Upcoming Tasks</div>
             <div class="card-body">
-                {% if tasks %}
+                 {# --- TEMPLATE DEBUG --- #}
+                 <p style="color: yellow; background: rgba(0,0,0,0.5); padding: 5px;">
+                    DEBUG: Received {{ tasks|length if tasks is defined else 'UNDEFINED' }} upcoming tasks.
+                 </p>
+                 {# --- END TEMPLATE DEBUG --- #}
+                {% if tasks is defined and tasks %}
                      <ul class="list-group list-group-flush">
+                        {% from 'tasks/_task_item.html' import render_dashboard_task with context %}
                         {% for task in tasks %}
                             {{ render_dashboard_task(task) }}
                         {% endfor %}
                      </ul>
                 {% else %}
-                     <p>No upcoming tasks assigned to you. Enjoy the tranquility!</p> {# Changed Text #}
+                     <p>No upcoming tasks assigned to you. Enjoy the tranquility!</p>
                 {% endif %}
-                 {# Add link to view all tasks page if created #}
             </div>
         </div>
     </div>

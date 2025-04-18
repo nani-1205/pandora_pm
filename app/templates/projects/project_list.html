@@ -3,10 +3,20 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>My Projects</h1>
+    {% if current_user.is_admin %}
     <a href="{{ url_for('projects.new_project') }}" class="btn btn-pandora">Create New Project</a>
+    {% endif %}
 </div>
 
-{% if projects %}
+{# --- TEMPLATE DEBUG --- #}
+<p style="color: yellow; background: rgba(0,0,0,0.5); padding: 5px;">
+    DEBUG: Received {{ projects|length if projects is defined else 'UNDEFINED' }} projects in template.
+    {% if projects is defined and projects %} First project owner: {{ projects[0].owner_id }} {% endif %}
+</p>
+{# --- END TEMPLATE DEBUG --- #}
+
+
+{% if projects is defined and projects %}
     <div class="row">
         {% for project in projects %}
         <div class="col-md-6 col-lg-4 mb-4">
@@ -17,13 +27,10 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text text-muted small">
-                        Created: {{ project.created_at.strftime('%Y-%m-%d') }}
-                        {% if project.due_date %}
-                         | Due: {{ project.due_date.strftime('%Y-%m-%d') }}
-                        {% endif %}
+                        Created: {{ project.created_at.strftime('%Y-%m-%d') if project.created_at else 'N/A' }}
+                        {% if project.due_date %} | Due: {{ project.due_date.strftime('%Y-%m-%d') }} {% endif %}
                     </p>
-                    <p class="card-text">{{ project.description | truncate(100) }}</p>
-                    {# Add task count or progress later #}
+                    <p class="card-text">{{ project.description | truncate(100) if project.description else 'No description.'}}</p>
                 </div>
                 <div class="card-footer bg-transparent border-top-0 text-end">
                      <a href="{{ url_for('projects.project_detail', project_id=project._id) }}" class="btn btn-sm btn-pandora-secondary">View Details</a>
@@ -33,9 +40,14 @@
         {% endfor %}
     </div>
 {% else %}
+{# This 'else' block is correctly displayed when 'projects' list is empty #}
     <div class="text-center mt-5">
-        <p>You haven't started any projects yet. Ready to explore?</p>
-        <a href="{{ url_for('projects.new_project') }}" class="btn btn-lg btn-pandora">Create Your First Project</a>
+        {% if current_user.is_admin %}
+             <p>You haven't created any projects yet. Ready to explore?</p>
+             <a href="{{ url_for('projects.new_project') }}" class="btn btn-lg btn-pandora">Create Your First Project</a>
+        {% else %}
+             <p>You do not own or are not assigned to any projects yet.</p>
+        {% endif %}
     </div>
 {% endif %}
 {% endblock %}
