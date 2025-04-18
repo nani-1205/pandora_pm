@@ -2,7 +2,8 @@
 import sys
 import os # Import os
 from flask import Flask, render_template, session
-from config import get_config, selected_config # Import the selected_config
+# Import selected_config AND config_by_name
+from config import selected_config, config_by_name
 from .extensions import mongo, login_manager, bcrypt
 from .models import User, get_projects_collection # Import models needed for index check
 from datetime import datetime
@@ -41,8 +42,7 @@ def create_app():
     print("-" * 50)
 
     # --- Add specific checks for Production if needed ---
-    # Note: FLASK_ENV might not be reliably set, use app.config['ENV'] if available
-    # or rely on the config class type.
+    # Use the imported config_by_name here
     if isinstance(selected_config, config_by_name['production']):
         print("Production environment Configuration Class loaded. Performing checks...")
         # Check if essential DB connection info is present in the loaded config
@@ -66,7 +66,7 @@ def create_app():
         # Ensure MONGO_URI exists before initializing
         if not app.config.get('MONGO_URI'):
              print("CRITICAL: Cannot initialize PyMongo because MONGO_URI is not set in the configuration.")
-             print("Check MONGODB_HOST and DATABASE_NAME environment variables.")
+             print("Check MONGODB_HOST and DATABASE_NAME environment variables (and ensure .env is loaded).")
              sys.exit("Configuration Error: MONGO_URI missing")
 
         mongo.init_app(app)
@@ -182,8 +182,6 @@ def create_app():
 
                 # Ensure Indexes
                 print(f"  Ensuring indexes for '{coll_name}'...")
-                # Don't query indexes if collection doesn't exist yet, create_index will handle it
-                # current_indexes = collection.index_information() if coll_name in existing_collections else {}
 
                 for index_info in indexes:
                     try:
