@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Manage Users</h1>
+
+<table class="user-table"> <!-- Style this table -->
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Is Admin?</th>
+            <th>Joined</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+            {% include 'admin/_user_row.html' %}
+        {% else %}
+            <tr><td colspan="5">No users found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

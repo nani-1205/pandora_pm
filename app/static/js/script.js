@@ -1,13 +1,16 @@
-// Add any theme-specific or dynamic JavaScript here
-// Example: Initialize Bootstrap tooltips if you use them
-document.addEventListener('DOMContentLoaded', function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
+// app/static/js/script.js
+console.log("Avatar PM Script Loaded");
+
+// Example: Add confirmation for admin toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleForms = document.querySelectorAll('form[action*="toggle_admin"]');
+    toggleForms.forEach(form => {
+        form.addEventListener('submit', (event) => {
+            const button = form.querySelector('button[type="submit"]');
+            const action = button.textContent.trim().toLowerCase();
+            if (!confirm(`Are you sure you want to ${action} for this user?`)) {
+                event.preventDefault(); // Stop form submission
+            }
+        });
     });
-
-    console.log("Pandora PM Script Loaded");
-
-    // Add more JS interactions as needed
-    // e.g., confirm dialogues, AJAX calls, etc.
 });

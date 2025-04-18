@@ -1,0 +1,21 @@
+{# Expects 'user' variable in context #}
+<tr>
+    <td>{{ user.username }}</td>
+    <td>{{ user.email }}</td>
+    <td>{% if user.is_admin %}Yes{% else %}No{% endif %}</td>
+    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+    <td>
+        {% if user != current_user %} {# Don't allow toggling self easily from this button #}
+        <form method="POST" action="{{ url_for('admin_toggle_admin', user_id=user.id) }}" style="display: inline;">
+             {# Add CSRF token if needed for POST links/buttons outside WTForms #}
+             {# <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/> #}
+            <button type="submit" class="btn btn-sm {% if user.is_admin %}btn-warning{% else %}btn-success{% endif %}">
+                {% if user.is_admin %}Revoke Admin{% else %}Make Admin{% endif %}
+            </button>
+        </form>
+        {% else %}
+            (You)
+        {% endif %}
+         <!-- Add other actions like 'delete user' (with caution!) or 'view profile' later -->
+    </td>
+</tr>

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Create New Task for Project: {{ project.name }}</h2>
+    <form method="POST" action="{{ url_for('create_task', project_id=project.id) }}">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control") }}
+            {% if form.title.errors %}<div class="errors">{% for error in form.title.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=4) }}
+            {% if form.description.errors %}<div class="errors">{% for error in form.description.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.assigned_to.label }}
+            {{ form.assigned_to(class="form-control") }}
+            {% if form.assigned_to.errors %}<div class="errors">{% for error in form.assigned_to.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.status.label }}
+            {{ form.status(class="form-control") }}
+             {% if form.status.errors %}<div class="errors">{% for error in form.status.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.due_date.label }}
+            {{ form.due_date(class="form-control") }}
+            {% if form.due_date.errors %}<div class="errors">{% for error in form.due_date.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+             <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

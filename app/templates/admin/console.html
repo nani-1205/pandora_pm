@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Admin Console</h1>
+<p>Welcome, {{ current_user.username }}.</p>
+
+<div class="admin-sections">
+    <section class="admin-stats">
+         <h2>Site Statistics</h2>
+         <ul>
+             <li>Total Users: {{ user_count }}</li>
+             <li>Total Projects: {{ project_count }}</li>
+             <li>Total Tasks: {{ task_count }}</li>
+         </ul>
+    </section>
+
+    <section class="admin-actions">
+        <h2>Management Actions</h2>
+        <ul>
+            <li><a href="{{ url_for('admin_list_users') }}">Manage Users</a></li>
+            <li><a href="{{ url_for('list_projects') }}">View/Manage Projects</a></li>
+            <li><a href="{{ url_for('create_project') }}">Create New Project</a></li>
+            <!-- Add links to other admin functions as needed -->
+        </ul>
+    </section>
+</div>
+{% endblock %}

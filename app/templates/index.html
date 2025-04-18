@@ -1,75 +1,14 @@
-<!-- {% extends "base.html" %}
+{% extends "base.html" %}
 
-{# Override the container-pandora class for a potentially full-width landing feel #}
 {% block content %}
-<style>
-    /* Specific styles for the landing page */
-    .landing-hero {
-        text-align: center;
-        padding: 60px 20px;
-        color: #fff;
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
-        /* Remove the container background if you want the body background to show fully */
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
-    }
-    .landing-hero h1 {
-        font-size: 3.5rem;
-        font-weight: bold;
-        color: #ffffff; /* Brighter white for hero title */
-        margin-bottom: 20px;
-         /* Optional: Add a slight glow */
-        text-shadow: 0 0 10px rgba(111, 255, 210, 0.5), 2px 2px 8px rgba(0, 0, 0, 0.7);
-    }
-    .landing-hero p {
-        font-size: 1.3rem;
-        margin-bottom: 40px;
-        color: #e0f2ff;
-    }
-    .landing-actions .btn {
-        margin: 0 10px;
-        min-width: 150px; /* Ensure buttons have some width */
-        padding: 12px 25px;
-        font-size: 1.1rem;
-    }
-</style>
-
-<div class="landing-hero">
-    <h1>Welcome to Pandora PM</h1>
-    <p>Navigate your projects through the interconnected world of Pandora.</p>
-    <div class="landing-actions">
-        {% if current_user.is_authenticated %}
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-lg btn-pandora">Enter Dashboard</a>
-        {% else %}
-            <a href="{{ url_for('auth.login') }}" class="btn btn-lg btn-pandora">Login</a>
-            <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-pandora-secondary">Register</a>
+    <div class="hero-section"> <!-- Style with Avatar theme -->
+        <h1>Welcome to Avatar Project Management</h1>
+        <p>Manage your projects like navigating the forests of Pandora.</p>
+        {% if not current_user.is_authenticated %}
+        <p>
+            <a href="{{ url_for('register') }}" class="btn btn-primary">Get Started</a>
+            <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+        </p>
         {% endif %}
     </div>
-</div>
-
-{# You could add feature sections below if desired #}
-{#
-<div class="row mt-5 text-center features">
-    <div class="col-md-4">
-        <div class="feature-icon">...</div>
-        <h3>Track Projects</h3>
-        <p>Monitor progress like navigating the Hallelujah Mountains.</p>
-    </div>
-    <div class="col-md-4">
-         <div class="feature-icon">...</div>
-        <h3>Manage Tasks</h3>
-        <p>Assign and complete tasks with the precision of a Na'vi hunter.</p>
-    </div>
-    <div class="col-md-4">
-         <div class="feature-icon">...</div>
-        <h3>Collaborate</h3>
-        <p>Connect with your team through the Tsaheylu of project management.</p>
-    </div>
-</div>
-#}
-
 {% endblock %}
-
-{# Remove the default container styling for this page #}
-{% block main_container_class %}{% endblock %} -->

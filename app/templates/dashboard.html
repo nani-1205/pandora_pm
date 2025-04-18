@@ -1,80 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Dashboard</h1>
-    <a href="{{ url_for('projects.new_project') }}" class="btn btn-pandora">
-         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg me-1" viewBox="0 0 16 16">
-           <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
-         </svg>
-         New Project
-    </a>
-</div>
+<h1>{{ title }}</h1>
 
-<p class="lead">Welcome back, {{ current_user.username }}! Here's an overview of your world.</p>
+{% if current_user.is_admin %}
+    <div class="dashboard-admin">
+        <section class="stats">
+            <h2>Overview</h2>
+            <p>Total Users: {{ users.count() }}</p>
+            <p>Total Projects: {{ projects.count() }}</p>
+            <p>Total Tasks: {{ tasks.count() }}</p>
+             <!-- Add more stats - e.g., tasks by status -->
+        </section>
 
-<div class="row g-4">
-    <div class="col-md-6">
-        <div class="card card-pandora h-100">
-            <div class="card-header">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-folder-fill me-1" viewBox="0 0 16 16">
-                    <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3m-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981z"/>
-                </svg>
-                My Projects (Recent {{ projects|length }})
-            </div>
-            <div class="card-body">
-                {% if projects %}
-                    <ul class="list-group list-group-flush">
-                        {% for project in projects[:5] %} {# Show first 5 projects #}
-                            <li class="list-group-item list-group-item-action list-item-pandora d-flex justify-content-between align-items-center">
-                                <a href="{{ url_for('projects.project_detail', project_id=project._id) }}" class="stretched-link text-decoration-none list-link-pandora">{{ project.name }}</a>
-                                <span class="badge rounded-pill status-badge status-{{ project.status|lower|replace(' ', '-') }}">{{ project.status }}</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    {% if projects|length > 5 %}
-                        <div class="text-center mt-3">
-                            <a href="{{ url_for('projects.project_list') }}" class="btn btn-sm btn-pandora-secondary">View All Projects</a>
-                        </div>
-                    {% endif %}
+        <section class="recent-projects">
+            <h2>Recent Projects</h2>
+            <ul>
+                {% for project in projects.limit(5) %}
+                    <li><a href="{{ url_for('project_detail', project_id=project.id) }}">{{ project.name }}</a> (Created by: {{ project.created_by.username }})</li>
                 {% else %}
-                    <p class="text-center fst-italic">You haven't created or been assigned any projects yet.</p>
-                    <div class="text-center">
-                        <a href="{{ url_for('projects.new_project') }}" class="btn btn-pandora">Create Your First Project</a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+                    <li>No projects yet. <a href="{{ url_for('create_project') }}">Create one?</a></li>
+                {% endfor %}
+            </ul>
+        </section>
 
-    <div class="col-md-6">
-        <div class="card card-pandora h-100">
-            <div class="card-header">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard-check-fill me-1" viewBox="0 0 16 16">
-                    <path d="M6.5 0A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0zm3 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5z"/>
-                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1A2.5 2.5 0 0 1 9.5 5h-3A2.5 2.5 0 0 1 4 2.5zm6.854 7.354-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
-                </svg>
-                Upcoming Tasks
-             </div>
-            <div class="card-body">
-                {# Add logic here to fetch and display tasks due soon #}
-                <p class="text-center fst-italic">Task overview coming soon...</p>
-                {# Example: Link to view all tasks or add a new one #}
-                {# <a href="#" class="btn btn-pandora-secondary mt-3">View My Tasks</a> #}
-            </div>
-        </div>
+         <section class="users-overview">
+            <h2>Users</h2>
+            <p><a href="{{ url_for('admin_list_users') }}">Manage Users</a></p>
+            <!-- Maybe show recently joined users -->
+        </section>
     </div>
-
-    {# Add more dashboard widgets: Activity Feed, Stats, etc. #}
-    <!--
-    <div class="col-md-6">
-         <div class="card card-pandora h-100">
-            <div class="card-header">Recent Activity</div>
-            <div class="card-body">
-                <p class="text-center fst-italic">Activity feed coming soon...</p>
-            </div>
-        </div>
+{% else %}
+    {# Regular User Dashboard #}
+    <div class="dashboard-user">
+        <h2>My Assigned Tasks</h2>
+        {% if assigned_tasks %}
+        <ul class="task-list">
+            {% for task in assigned_tasks %}
+            <li class="task-item status-{{ task.status|lower|replace(' ', '-') }}">
+                <a href="{{ url_for('task_detail', task_id=task.id) }}">{{ task.title }}</a>
+                (Project: <a href="{{ url_for('project_detail', project_id=task.project.id) }}">{{ task.project.name }}</a>)
+                - Status: {{ task.status }}
+                {% if task.due_date %} - Due: {{ task.due_date.strftime('%Y-%m-%d') }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>You have no tasks assigned to you currently.</p>
+        {% endif %}
     </div>
-    -->
-</div>
+{% endif %}
 {% endblock %}

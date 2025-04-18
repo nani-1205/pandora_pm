@@ -1,396 +1,214 @@
-/* --- Pandora PM Avatar Theme --- */
-
-/* --- Fonts --- */
-/* Consider importing a thematic font if desired */
-/* @import url('https://fonts.googleapis.com/css2?family=YourChosenFont&display=swap'); */
+/* app/static/css/style.css */
+/* --- AVATAR THEME PLACEHOLDER --- */
 
 body {
-    /* Background Image */
-    background-image: url("../img/background.jpg"); /* <<< ENSURE THIS PATH IS CORRECT */
-    background-size: cover;
-    background-position: center center;
-    background-attachment: fixed;
-    background-color: #050a1a; /* Dark blue fallback */
-
-    /* Base Font */
-    font-family: sans-serif; /* Replace with your chosen font */
-    color: #e0f2ff; /* Light blue/off-white text */
-
-    /* Ensure content doesn't overlap fixed navbar */
-    padding-top: 70px; /* Adjust based on your navbar height */
-    padding-bottom: 60px; /* Space for footer */
+    /* Example: Deep blue/purple gradient background */
+    background: linear-gradient(to bottom right, #0b132b, #1c2541, #3a506b);
+    color: #e0fbfc; /* Light cyan/white text */
+    font-family: sans-serif; /* Choose an Avatar-like font */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
 }
 
-main.content-wrap {
-    flex: 1; /* Push footer down */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 15px;
+    background-color: rgba(28, 37, 65, 0.8); /* Semi-transparent dark panel */
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(152, 246, 252, 0.3); /* Bioluminescent glow */
+    flex-grow: 1;
 }
 
-/* --- Navbar --- */
-.navbar-pandora {
-    background-color: rgba(11, 19, 43, 0.85); /* Semi-transparent dark deep blue */
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid #3a506b; /* Subtle darker blue border */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+/* Navbar */
+.navbar {
+    background-color: rgba(11, 19, 43, 0.9); /* Darker semi-transparent */
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
-
-.navbar-pandora .navbar-brand {
-    color: #6fffd2; /* Bioluminescent cyan/green */
+.navbar-brand {
+    color: #98f6fc; /* Bright cyan */
     font-weight: bold;
-    /* Add text-shadow for glow? */
-    /* text-shadow: 0 0 5px #6fffd2, 0 0 10px #6fffd2; */
-}
-
-.navbar-pandora .nav-link {
-    color: #a2d2ff; /* Lighter blue for links */
-    transition: color 0.2s ease-in-out, text-shadow 0.2s ease-in-out;
-}
-
-.navbar-pandora .nav-link:hover,
-.navbar-pandora .nav-link.active {
-    color: #ffffff;
-    /* text-shadow: 0 0 3px #ffffff; */
-}
-
-.navbar-toggler {
-    border-color: rgba(111, 255, 210, 0.5); /* Cyan border */
-}
-.navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(111, 255, 210, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-}
-/* Dropdown menu styling */
- .navbar-pandora .dropdown-menu {
-    background-color: rgba(11, 19, 43, 0.95);
-    border: 1px solid #3a506b;
-    border-radius: 0.5rem;
- }
- .navbar-pandora .dropdown-item {
-    color: #a2d2ff;
- }
- .navbar-pandora .dropdown-item:hover,
- .navbar-pandora .dropdown-item:focus {
-    color: #ffffff;
-    background-color: rgba(78, 205, 196, 0.2); /* Faint cyan highlight */
- }
-
-/* --- Main Content Container --- */
-.container-pandora {
-    background-color: rgba(27, 38, 59, 0.9); /* Darker semi-transparent blue */
-    padding: 30px;
-    border-radius: 15px;
-    border: 1px solid rgba(78, 205, 196, 0.4); /* Muted cyan border */
-    box-shadow: 0 0 25px rgba(78, 205, 196, 0.15); /* Subtle glow effect */
-    margin-bottom: 30px;
-}
-
-/* --- Headings --- */
-h1, h2, h3, h4, h5, h6 {
-    color: #a2d2ff; /* Lighter blue for headings */
-    /* Consider a thematic font-family */
-    /* font-family: 'Your Thematic Font', sans-serif; */
-    font-weight: 300; /* Lighter weight often looks good on dark themes */
-}
-h1 { color: #c1eaff; font-weight: 400;} /* Slightly brighter H1 */
-.form-title-pandora, .project-detail-title {
-    color: #6fffd2; /* Cyan title */
-    text-align: center;
-    /* text-shadow: 0 0 8px rgba(111, 255, 210, 0.5); */
-}
-
-
-/* --- Links --- */
-a, .link-pandora {
-    color: #6fffd2; /* Cyan */
+    font-size: 1.5em;
     text-decoration: none;
-    transition: color 0.2s ease, text-shadow 0.2s ease;
+    text-shadow: 0 0 5px #98f6fc;
 }
-a:hover, .link-pandora:hover {
-    color: #a2d2ff; /* Lighter blue on hover */
-    /* text-shadow: 0 0 5px #a2d2ff; */
+.navbar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
 }
-.link-pandora-secondary {
-    color: #a2d2ff;
+.navbar ul li {
+    margin-left: 15px;
 }
-.link-pandora-secondary:hover {
-     color: #ffffff;
+.navbar ul li a {
+    color: #e0fbfc;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s, text-shadow 0.3s;
 }
+.navbar ul li a:hover, .navbar ul li a.active {
+    background-color: rgba(58, 80, 107, 0.7);
+    text-shadow: 0 0 8px #e0fbfc;
+}
+.navbar ul li span { /* For username display */
+    color: #a7d6e8;
+    margin-right: 10px;
+}
+/* Add styles for dropdown if used */
 
-/* --- Buttons --- */
-.btn-pandora {
-    background-color: #4ecdc4; /* Cyan */
-    border: none;
-    color: #0b132b; /* Dark blue text */
-    font-weight: bold;
-    padding: 0.5rem 1.2rem;
-    border-radius: 50px; /* Rounded pill shape */
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
-}
-.btn-pandora:hover {
-    background-color: #6fffd2; /* Lighter cyan */
-    color: #050a1a;
-    box-shadow: 0 0 12px rgba(111, 255, 210, 0.6);
-    transform: translateY(-1px);
-}
-.btn-pandora:active {
-     transform: translateY(0px);
-     box-shadow: 0 0 5px rgba(111, 255, 210, 0.4);
-}
-
-.btn-pandora-secondary {
-    background-color: transparent;
-    border: 1px solid #4ecdc4;
-    color: #4ecdc4;
-    padding: 0.5rem 1.2rem;
-    border-radius: 50px;
-    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
-}
-.btn-pandora-secondary:hover {
-    background-color: rgba(78, 205, 196, 0.15); /* Faint cyan background */
-    color: #6fffd2;
-    box-shadow: 0 0 8px rgba(111, 255, 210, 0.3);
-     transform: translateY(-1px);
-}
- .btn-pandora-secondary:active {
-     transform: translateY(0px);
-     box-shadow: 0 0 3px rgba(111, 255, 210, 0.2);
-}
-
-/* --- Forms --- */
-.form-control-pandora, .form-select-pandora {
-    background-color: rgba(11, 19, 43, 0.7); /* Dark transparent */
-    color: #e0f2ff;
-    border: 1px solid #3a506b; /* Dark blue border */
-    border-radius: 0.3rem;
-}
-.form-control-pandora:focus, .form-select-pandora:focus {
-    background-color: rgba(11, 19, 43, 0.9);
-    color: #ffffff;
-    border-color: #4ecdc4; /* Cyan focus */
-    box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
-    outline: none;
-}
-.form-control-pandora::placeholder {
-    color: rgba(224, 242, 255, 0.5);
-}
-.form-label {
-    color: #a2d2ff; /* Lighter blue labels */
-    font-weight: 500;
-}
-.form-check-input {
-    background-color: rgba(11, 19, 43, 0.7);
-    border-color: #3a506b;
-}
-.form-check-input:checked {
-    background-color: #4ecdc4;
-    border-color: #4ecdc4;
-}
-.form-check-label {
-    color: #e0f2ff;
-}
-.form-text {
-    color: rgba(162, 210, 255, 0.8); /* Slightly muted help text */
-}
-
-/* --- Cards --- */
-.card-pandora {
-    background-color: rgba(58, 80, 107, 0.8); /* Medium dark blue, semi-transparent */
-    border: 1px solid #3a506b;
-    border-radius: 10px;
-    color: #e0f2ff;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-.project-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(78, 205, 196, 0.1);
-}
-
-.card-pandora .card-header {
-    background-color: rgba(78, 205, 196, 0.1); /* Faint cyan tint */
-    color: #6fffd2; /* Cyan text */
-    border-bottom: 1px solid #3a506b;
-    font-weight: 500;
-    padding: 0.75rem 1.25rem;
-}
-.card-pandora .card-body {
-    padding: 1.25rem;
-}
-.card-pandora .card-footer.footer-pandora {
-    background-color: rgba(27, 38, 59, 0.6); /* Slightly darker footer */
-    border-top: 1px solid #3a506b;
-    color: #a2d2ff;
-    padding: 0.75rem 1.25rem;
-}
-.description-pandora {
-    color: #b0c4de; /* Lighter steel blue for descriptions */
-    font-size: 0.95rem;
-    line-height: 1.5;
-}
-
-/* --- Lists --- */
-.list-group-item.list-item-pandora {
-     background-color: transparent;
-     border-color: rgba(58, 80, 107, 0.5); /* Muted border */
-     color: #e0f2ff;
-     padding: 0.75rem 1.25rem;
-}
-.list-group-item.list-item-pandora a.list-link-pandora {
-     color: #a2d2ff; /* Lighter blue for list item links */
-     font-weight: 500;
-}
- .list-group-item.list-item-pandora a.list-link-pandora:hover {
-      color: #ffffff;
- }
-.list-group-flush > .list-group-item.list-item-pandora {
-    border-width: 0 0 1px; /* Only bottom border for flush list */
-}
- .list-group-flush > .list-group-item.list-item-pandora:last-child {
-    border-bottom-width: 0;
-}
-
-/* Task List Specific */
-.task-list-pandora .list-group-item {
-    background-color: rgba(27, 38, 59, 0.7);
-    margin-bottom: 0.5rem;
+/* Forms */
+.form-container {
+    background-color: rgba(11, 19, 43, 0.85);
+    padding: 25px;
     border-radius: 5px;
+    margin: 20px auto;
+    max-width: 500px;
+    box-shadow: 0 0 10px rgba(152, 246, 252, 0.2);
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #b3e0f2; /* Lighter blue for labels */
+}
+.form-control {
+    width: 95%; /* Adjust as needed */
+    padding: 10px;
+    background-color: rgba(91, 192, 190, 0.1); /* Faint teal input background */
     border: 1px solid #3a506b;
+    border-radius: 4px;
+    color: #e0fbfc;
 }
-.task-name { color: #c1eaff; font-weight: 500; }
-.task-description { color: #b0c4de; font-size: 0.9rem; }
-.task-meta { font-size: 0.8rem; color: #8aabcd; }
-.status-select-pandora {
-     background-color: rgba(11, 19, 43, 0.8);
-     border-color: #3a506b;
-     color: #e0f2ff;
+.form-control:focus {
+    outline: none;
+    border-color: #98f6fc;
+    box-shadow: 0 0 8px rgba(152, 246, 252, 0.5);
 }
-
-
-/* --- Tables --- */
-.table-pandora {
-    color: #e0f2ff;
-    border-color: #3a506b;
+textarea.form-control {
+    min-height: 80px;
 }
-.table-pandora th {
-    color: #6fffd2; /* Cyan headers */
-    background-color: rgba(78, 205, 196, 0.1);
-    border-color: #3a506b;
+.form-check {
+    display: flex;
+    align-items: center;
 }
-.table-pandora > :not(caption) > * > * { /* Target all cells */
-     background-color: rgba(58, 80, 107, 0.3); /* Cell background */
-     border-color: #3a506b;
-}
-.table-hover > tbody > tr:hover > * {
-    background-color: rgba(58, 80, 107, 0.6); /* Darker hover */
-    color: #ffffff;
+.form-check input {
+    margin-right: 8px;
 }
 
-/* --- Badges --- */
-.status-badge, .role-badge {
-    font-size: 0.75em;
-    font-weight: 600;
-    padding: 0.3em 0.6em;
-}
-/* Project/Task Statuses */
-.status-not-started { background-color: #6c757d; color: #fff; } /* Grey */
-.status-in-progress { background-color: #0d6efd; color: #fff; } /* Blue */
-.status-completed, .status-done { background-color: #198754; color: #fff; } /* Green */
-.status-on-hold, .status-blocked { background-color: #ffc107; color: #000; } /* Yellow */
-.status-cancelled { background-color: #dc3545; color: #fff; } /* Red */
-.status-to-do { background-color: #adb5bd; color: #000;} /* Light Grey */
-.status-review { background-color: #fd7e14; color: #fff; } /* Orange */
-
-/* User Roles */
-.role-admin { background-color: #6f42c1; color: #fff; } /* Purple */
-.role-user { background-color: #20c997; color: #000; } /* Teal */
-
-/* --- Alerts --- */
-.alert {
-    background-color: rgba(27, 38, 59, 0.95);
-    border-left-width: 5px;
-    border-right: none;
-    border-top: none;
-    border-bottom: none;
-    color: #e0f2ff;
-}
-.alert-dismissible .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%); /* Make close button visible */
-}
-.alert-success { border-left-color: #198754; color: #d1e7dd; }
-.alert-danger { border-left-color: #dc3545; color: #f8d7da;}
-.alert-warning { border-left-color: #ffc107; color: #fff3cd; }
-.alert-info { border-left-color: #0dcaf0; color: #cff4fc; }
-.alert-secondary { border-left-color: #6c757d; color: #e2e3e5; }
-
-/* --- Breadcrumbs --- */
-.breadcrumb-pandora {
-    background-color: rgba(58, 80, 107, 0.5);
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-}
-.breadcrumb-pandora .breadcrumb-item {
-    color: #a2d2ff;
-}
-.breadcrumb-pandora .breadcrumb-item a {
-    color: #6fffd2;
+/* Buttons */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
     text-decoration: none;
-}
- .breadcrumb-pandora .breadcrumb-item a:hover {
-    color: #ffffff;
- }
-.breadcrumb-pandora .breadcrumb-item + .breadcrumb-item::before {
-    color: #a2d2ff; /* Separator color */
-    content: var(--bs-breadcrumb-divider, ">"); /* Use Bootstrap's default or customize */
-}
-.breadcrumb-pandora .breadcrumb-item.active {
-    color: #e0f2ff; /* Active item color */
     font-weight: bold;
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
-
-/* --- Horizontal Rule --- */
-.hr-pandora {
-    border: 0;
-    height: 1px;
-    background-image: linear-gradient(to right, rgba(78, 205, 196, 0), rgba(78, 205, 196, 0.75), rgba(78, 205, 196, 0));
-    margin: 2rem 0;
+.btn-primary {
+    background-color: #5bc0be; /* Teal/Cyan */
+    color: #0b132b; /* Dark blue text */
 }
-
-/* --- Footer --- */
-.pandora-footer {
-    color: #6fffd2;
-    opacity: 0.7;
-    padding: 1rem 0;
-    font-size: 0.9rem;
-    margin-top: auto; /* Push footer to bottom */
+.btn-primary:hover {
+    background-color: #7adedc;
+    box-shadow: 0 0 10px rgba(152, 246, 252, 0.6);
 }
-
-/* --- Error Pages --- */
-.error-page {
-    margin-top: 50px;
-    margin-bottom: 50px;
+.btn-secondary {
+    background-color: #3a506b; /* Darker accent blue */
+    color: #e0fbfc;
 }
-.error-code {
-    font-size: 8rem;
-    color: #dc3545; /* Red for error */
-    font-weight: bold;
-    text-shadow: 0 0 15px rgba(220, 53, 69, 0.5);
+ .btn-secondary:hover {
+    background-color: #4e6a8a;
 }
-.error-page h2 {
-     color: #ffc107; /* Yellow warning */
+.btn-sm { /* For smaller buttons like admin toggle */
+     padding: 5px 10px;
+     font-size: 0.9em;
 }
-.error-page .lead {
-     color: #a2d2ff;
+.btn-warning { /* For revoke admin */
+     background-color: #f0ad4e; color: #fff;
+}
+.btn-success { /* For make admin */
+    background-color: #5cb85c; color: #fff;
 }
 
 
-/* --- Responsiveness Example --- */
-@media (max-width: 768px) {
-    body {
-        padding-top: 60px; /* Adjust if navbar height changes */
-    }
-    .container-pandora {
-        padding: 20px;
-    }
-     h1 { font-size: 1.8rem; }
-     h2 { font-size: 1.5rem; }
+/* Flashes */
+.flash-messages .alert {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border: 1px solid transparent;
 }
+.alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb;}
+.alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;}
+.alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;}
+.alert-warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba;}
+
+
+/* Task Lists and Statuses */
+.task-list { list-style: none; padding-left: 0; }
+.task-item {
+    background-color: rgba(58, 80, 107, 0.5);
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-left: 5px solid #ccc; /* Default border */
+    border-radius: 4px;
+}
+.task-item a { color: #98f6fc; text-decoration: none; }
+.task-item a:hover { text-decoration: underline; }
+
+/* Status specific styling - use Avatar inspired colors */
+.status-to-do { border-left-color: #6c757d; } /* Greyish */
+.status-in-progress { border-left-color: #5bc0be; } /* Teal */
+.status-blocked { border-left-color: #d9534f; } /* Reddish */
+.status-in-review { border-left-color: #f0ad4e; } /* Yellow/Orange */
+.status-done { border-left-color: #5cb85c; } /* Green */
+
+/* Admin Table */
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.user-table th, .user-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #3a506b;
+}
+.user-table th {
+    background-color: rgba(11, 19, 43, 0.9);
+    color: #98f6fc;
+}
+.user-table tr:nth-child(even) {
+    background-color: rgba(28, 37, 65, 0.6); /* Slightly different for rows */
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 15px;
+    margin-top: 20px; /* Pushes footer down */
+    color: #a7d6e8;
+    font-size: 0.9em;
+    background-color: rgba(11, 19, 43, 0.8);
+}
+
+/* Errors */
+.errors small {
+    color: #f87878; /* Light red for errors */
+    display: block;
+    margin-top: 3px;
+}
+
+/* Add more styles for specific elements, responsiveness etc */

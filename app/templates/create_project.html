@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Create New Project</h2>
+    <form method="POST" action="{{ url_for('create_project') }}">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.name.label }}
+            {{ form.name(class="form-control") }}
+            {% if form.name.errors %}<div class="errors">{% for error in form.name.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=5) }}
+             {% if form.description.errors %}<div class="errors">{% for error in form.description.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+        </div>
+         <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
