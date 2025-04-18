@@ -1,8 +1,17 @@
 # app/forms.py
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, DateField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, Optional # Import Optional validator
-from .models import User, Project, TASK_STATUS_CHOICES, THEME_CHOICES, AVAILABLE_THEMES, WorkPackage # Import WorkPackage
+# --- Import necessary field types ---
+from wtforms import (
+    StringField, PasswordField, SubmitField, BooleanField, TextAreaField,
+    SelectField, DateField, DateTimeLocalField # Added DateTimeLocalField
+)
+from wtforms.validators import (
+    DataRequired, Length, Email, EqualTo, ValidationError, Optional # Import Optional validator
+)
+# --- Import theme choices and User model ---
+from .models import User, Project, TASK_STATUS_CHOICES, THEME_CHOICES, AVAILABLE_THEMES, WorkPackage # Import User and Theme constants
+# --- Import datetime for form validation ---
+from datetime import datetime
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username',
@@ -35,7 +44,6 @@ class ProjectForm(FlaskForm):
     description = TextAreaField('Description')
     submit = SubmitField('Create Project')
 
-# --- NEW: WorkPackage Form ---
 class WorkPackageForm(FlaskForm):
     name = StringField('Work Package Name', validators=[DataRequired(), Length(max=150)])
     description = TextAreaField('Description')
@@ -47,39 +55,31 @@ class WorkPackageForm(FlaskForm):
         if end_date.data and self.start_date.data and end_date.data < self.start_date.data:
             raise ValidationError('End date must not be earlier than start date.')
 
-# --- NEW: Milestone Form ---
 class MilestoneForm(FlaskForm):
     name = StringField('Milestone Name', validators=[DataRequired(), Length(max=150)])
     target_date = DateField('Target Date', format='%Y-%m-%d', validators=[DataRequired()])
     description = TextAreaField('Description (Optional)')
     submit = SubmitField('Create Milestone')
 
-# --- UPDATED: Task Form ---
 class TaskForm(FlaskForm):
     title = StringField('Task Title', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Description')
-    # --- NEW: Work Package Selection ---
-    work_package = SelectField('Work Package (Optional)', coerce=str, validators=[Optional()]) # Use work package ID string
+    work_package = SelectField('Work Package (Optional)', coerce=str, validators=[Optional()])
     assigned_to = SelectField('Assign To', coerce=str, validators=[DataRequired()])
     status = SelectField('Status', choices=TASK_STATUS_CHOICES, default='To Do', validators=[DataRequired()])
     due_date = DateField('Due Date (Optional)', format='%Y-%m-%d', validators=[Optional()])
     submit = SubmitField('Create Task')
 
-    # Update __init__ to populate Work Package choices for the specific project
     def __init__(self, project_id=None, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
-        # Populate assigned_to with users
         self.assigned_to.choices = [(str(user.id), user.username) for user in User.objects.order_by('username')]
-
-        # Populate work_package choices if project_id is provided
         if project_id:
-            wp_choices = [('', '--- None ---')] # Add option for no WP assignment
+            wp_choices = [('', '--- None ---')]
             wps = WorkPackage.objects(project=project_id).order_by('name')
             wp_choices.extend([(str(wp.id), wp.name) for wp in wps])
             self.work_package.choices = wp_choices
         else:
              self.work_package.choices = [('', '--- Select Project First ---')]
-
 
 class UpdateTaskStatusForm(FlaskForm):
     status = SelectField('Status', choices=TASK_STATUS_CHOICES, validators=[DataRequired()])
@@ -100,17 +100,34 @@ class UpdateProfileForm(FlaskForm):
 
     def validate_username(self, username):
         if username.data != self.original_username:
-            # Allowing username change check, but input field is readonly in template for now
             user = User.objects(username=username.data).first()
             if user:
-                raise ValidationError('That username is already taken. Please choose a different one.')
+                raise ValidationError('That username is already taken.')
 
     def validate_email(self, email):
          if email.data != self.original_email:
             user = User.objects(email=email.data).first()
             if user:
-                raise ValidationError('That email is already registered. Please use a different one.')
+                raise ValidationError('That email is already registered.')
 
     def validate_theme(self, theme):
         if theme.data not in AVAILABLE_THEMES:
             raise ValidationError('Invalid theme selected.')
+
+# --- CalendarEventForm DEFINITION ---
+class CalendarEventForm(FlaskForm):
+    title = StringField('Event Title', validators=[DataRequired(), Length(max=200)])
+    description = TextAreaField('Description', validators=[Optional()])
+    # Use DateTimeLocalField for easier browser picker integration
+    start_time = DateTimeLocalField('Start Time', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    end_time = DateTimeLocalField('End Time', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    all_day = BooleanField('All Day Event')
+    submit = SubmitField('Save Event')
+
+    # Custom validation: end time must be after start time
+    def validate_end_time(self, end_time):
+        if end_time.data and self.start_time.data and end_time.data <= self.start_time.data:
+            # For all-day events, end should be at least the same day or later
+            # More precise check might be needed depending on how all-day end is stored
+            if not (self.all_day.data and end_time.data.date() >= self.start_time.data.date()):
+                 raise ValidationError('End time must be after start time.')
