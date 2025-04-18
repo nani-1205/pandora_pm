@@ -162,18 +162,45 @@ main.container { /* Specifically target the main container if needed */
     color: #b3e0f2; /* Lighter blue for labels */
     font-weight: bold;
 }
+
+/* Base styling for all form controls */
 .form-control,
 select.form-control,
-textarea.form-control { /* Apply to all form inputs */
+textarea.form-control {
     width: 95%; /* Adjust as needed, consider padding */
     padding: 12px;
     background-color: rgba(91, 192, 190, 0.1); /* Faint teal input background */
     border: 1px solid #3a506b;
     border-radius: 5px;
-    color: #e0fbfc;
+    color: #e0fbfc; /* Default TEXT COLOR for inputs (light) */
     font-size: 1em;
     transition: border-color 0.3s, box-shadow 0.3s;
 }
+
+/* Specific overrides for SELECT elements */
+select.form-control {
+    color: #333333; /* Dark text color for the select box itself and inherited by options */
+    background-color: rgba(11, 19, 43, 0.85); /* Match panel background for the box */
+
+    /* Custom arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 2.5rem; /* Space for the arrow */
+}
+
+/* Optional: Attempt direct option styling (browser support varies) */
+select.form-control option {
+   background-color: #ffffff; /* Standard white dropdown background */
+   color: #333333;      /* Standard dark text */
+   /* Padding/other styles often ignored by browsers here */
+}
+
+/* Focus styles for all form controls */
 .form-control:focus,
 select.form-control:focus,
 textarea.form-control:focus {
@@ -181,18 +208,29 @@ textarea.form-control:focus {
     border-color: #98f6fc;
     box-shadow: 0 0 10px rgba(152, 246, 252, 0.6);
 }
+
+/* Ensure select text remains dark on focus */
+select.form-control:focus {
+    color: #333333;
+}
+
+/* Textarea specific */
 textarea.form-control {
     min-height: 100px;
     resize: vertical; /* Allow vertical resizing */
 }
+
+/* Checkbox/Radio specific */
 .form-check {
     display: flex;
     align-items: center;
     color: #b3e0f2;
 }
-.form-check input[type="checkbox"] {
+.form-check input[type="checkbox"],
+.form-check input[type="radio"] {
     margin-right: 10px;
     width: auto; /* Override default width */
+    flex-shrink: 0; /* Prevent shrinking */
 }
 .form-check label {
     margin-bottom: 0; /* Align label with checkbox */
@@ -388,45 +426,66 @@ a:hover {
     text-decoration: none; /* Keep underline off by default? */
 }
 
-/* Add more styles for specific elements, responsiveness etc */
+/* Responsiveness */
 @media (max-width: 768px) {
-    .navbar ul {
-        flex-direction: column; /* Stack nav items on small screens */
-        width: 100%;
+    .navbar {
+        padding: 10px 15px;
     }
+    .navbar ul {
+        /* Consider implementing a mobile toggle menu instead of stacking */
+        /* For now, basic stacking: */
+        flex-direction: column;
+        width: 100%;
+        display: none; /* Hide by default, show with JS toggle */
+    }
+    .navbar ul.active { /* Add 'active' class with JS */
+        display: flex;
+    }
+
     .navbar ul li {
         margin-left: 0;
         margin-bottom: 5px;
         text-align: center;
+        width: 100%;
     }
      .navbar ul li.dropdown ul.dropdown-content {
         position: static; /* Dropdown becomes part of flow */
         box-shadow: none;
         border: none;
         background-color: transparent;
+        width: 100%;
      }
+     .navbar ul li.dropdown ul.dropdown-content li a {
+         text-align: center;
+     }
+
+    /* Add a mobile menu toggle button */
+    /* .navbar-toggle { display: block; ... } */
+
     main.container {
         width: 98%;
-        padding: 10px;
+        padding: 15px;
     }
     .form-container {
-         width: 90%;
-         padding: 15px;
+         width: 95%;
+         padding: 20px;
     }
     .btn {
         padding: 10px 15px;
         font-size: 0.95em;
-        display: block; /* Make buttons full width */
-        width: 90%;
-        margin: 10px auto; /* Center buttons */
-    }
-    .btn:last-child {
-         margin-bottom: 0;
+        /* Consider if full width is desired on mobile */
+        /* display: block; */
+        /* width: 90%; */
+        /* margin: 10px auto; */
     }
     .user-table {
-         font-size: 0.9em;
+         font-size: 0.85em;
     }
      .user-table th, .user-table td {
-        padding: 8px 10px;
+        padding: 8px 5px; /* Reduce padding */
+        /* Consider hiding less important columns on mobile */
     }
+    h1 { font-size: 1.8em; }
+    h2 { font-size: 1.5em; }
+    h3 { font-size: 1.3em; }
 }
