@@ -1,24 +1,24 @@
 <!-- app/templates/calendar.html -->
 {% extends "base.html" %}
 
-{% block head_extra %}
+{% block head_extra %} {# Add an extra block in base.html's head if needed, or put directly #}
     {# FullCalendar CSS v6 - Not needed as separate file for index.global.js #}
 
     {# Basic CSS for event colors & Modal #}
     <style>
-        #calendar { max-width: 1100px; margin: 20px auto; background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;}
-        .fc-event { cursor: pointer; }
+        #calendar { max-width: 1100px; margin: 20px auto; background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;} /* Give calendar area a background */
+        .fc-event { cursor: pointer; } /* Indicate events are clickable */
         .fc-event, .fc-event-dot { /* Theme colors applied via classes below */ }
         .event-task { background-color: #3498db; border-color: #2980b9; }
         .event-milestone { background-color: #f39c12; border-color: #e67e22; }
-        .event-custom { background-color: #9b59b6; border-color: #8e44ad; }
+        .event-custom { background-color: #9b59b6; border-color: #8e44ad; } /* Purple for custom */
         .event-done { background-color: #2ecc71 !important; border-color: #27ae60 !important; opacity: 0.7; }
         .event-overdue { border: 2px dashed #e74c3c !important; background-color: transparent !important; color: #e74c3c !important; }
         .fc-event-title-container .fc-event-title, .fc-event-time { color: white !important; } /* Default white text */
 
         /* Simple Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;}
-        .modal-content { background: #333; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; color: #eee; border: 1px solid #555; }
+        .modal-content { background: #333; /* Dark background for modal */ padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; color: #eee; /* Light text */ border: 1px solid #555; }
         .modal-content h3 { margin-top: 0; color: #fff;}
         .modal-content label { display: block; margin-bottom: 5px; color: #ccc;}
         .modal-content input[type="text"],
@@ -37,12 +37,14 @@
 <div class="calendar-container panel-box"> {# Optional class #}
     <h1>{{ title }}</h1>
     <div id="calendar-loading" style="display: none; text-align: center; padding: 20px;">Loading...</div>
+    {# Back links etc. #}
     {% if project %}
         <p><a href="{{ url_for('main.project_detail', project_id=project.id) }}">Back to Project</a> | <a href="{{ url_for('main.project_roadmap', project_id=project.id) }}">View Roadmap</a></p>
     {% else %}
          <p><a href="{{ url_for('main.dashboard') }}">Back to Dashboard</a></p>
     {% endif %}
 
+    {# Div where the calendar will be rendered #}
     <div id='calendar'></div>
 </div>
 
@@ -102,7 +104,9 @@
 
     var eventsUrl = '{{ url_for("main.calendar_events", project_id=project.id if project else None) }}';
     var newEventUrl = '{{ url_for("main.create_calendar_event_api") }}'; // Single endpoint
-    var currentProjectId = {{ project.id|tojson if project else 'null' }}; // Pass project ID if exists
+
+    // --- CORRECTED LINE: Convert ObjectId to string before passing to tojson ---
+    var currentProjectId = {{ str(project.id)|tojson if project else 'null' }}; // Pass project ID if exists
 
     function openModal(startStr, endStr, allDay) {
         modalTitle.textContent = 'Add New Event';
@@ -111,26 +115,24 @@
         const formatForInput = (isoStr) => isoStr ? isoStr.substring(0, 16) : ''; // YYYY-MM-DDTHH:MM
 
         eventStart.value = formatForInput(startStr);
-        // For all-day clicks, FullCalendar often provides end as start of *next* day.
-        // Adjust end input to be same day as start for default all-day event.
+        // Adjust end input for all-day clicks
         if (allDay) {
-             // Try parsing end date to see if it's the next day
              let endDate = endStr ? new Date(endStr) : null;
              let startDate = startStr ? new Date(startStr) : null;
+             // If FullCalendar provides end as start of next day for allDay, set input end=start
              if (endDate && startDate && endDate.getTime() > startDate.getTime() && endDate.getUTCDate() !== startDate.getUTCDate()) {
-                // End is likely exclusive, set input to start date
                 eventEnd.value = formatForInput(startStr);
              } else {
                 eventEnd.value = formatForInput(endStr || startStr); // Default end=start if no end provided
              }
-             eventAllDay.checked = true; // Check the box
+             eventAllDay.checked = true;
         } else {
             eventEnd.value = formatForInput(endStr);
             eventAllDay.checked = false;
         }
 
         modal.style.display = 'flex';
-        eventTitle.focus(); // Focus title field
+        eventTitle.focus();
     }
 
     function closeModal() { modal.style.display = 'none'; }
@@ -154,10 +156,10 @@
             end: new Date(end).toISOString(),     // Send ISO string to backend
             allDay: allDay
         };
+        // Add project_id if it exists
         if (currentProjectId) { eventData.project_id = currentProjectId; }
 
-        saveButton.disabled = true; // Prevent double clicks
-        saveButton.textContent = 'Saving...';
+        saveButton.disabled = true; saveButton.textContent = 'Saving...';
 
         fetch(newEventUrl, {
             method: 'POST',
@@ -181,11 +183,11 @@
             modalError.textContent = 'Save failed: ' + error.message;
         })
         .finally(() => {
-            saveButton.disabled = false; // Re-enable button
-             saveButton.textContent = 'Save Event';
+            saveButton.disabled = false; saveButton.textContent = 'Save Event';
         });
     });
 
+    // --- Initialize FullCalendar ---
     var calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
@@ -193,11 +195,13 @@
       selectable: true,
       select: function(selectInfo) { openModal(selectInfo.startStr, selectInfo.endStr, selectInfo.allDay); calendar.unselect(); },
       editable: false, // Keep editing disabled for now
-      dayMaxEvents: true,
+      dayMaxEvents: true, // Show "more" link
       eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
       eventClick: function(info) {
-            info.jsEvent.preventDefault();
-            if (info.event.url) { window.location.href = info.event.url; }
+            info.jsEvent.preventDefault(); // Prevent default only if URL exists
+            if (info.event.url) {
+                window.location.href = info.event.url; // Go to task/milestone/event page
+            }
             // Add logic here later to open edit modal for 'custom_event' type
        },
        loading: function(isLoading) {
@@ -205,6 +209,7 @@
             if (loadingEl) loadingEl.style.display = isLoading ? 'block' : 'none';
         }
     });
+
     calendar.render();
   });
 </script>
