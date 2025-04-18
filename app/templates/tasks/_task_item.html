@@ -1,78 +1,44 @@
-{# pandora_pm/app/templates/tasks/_task_item.html #}
-
-{# Macro to render a single task item in the project detail view #}
-{# Accept users_dict as an argument #}
-{% macro render_task(project_id, task, users_dict) %}
-<div class="task-item card card-pandora mb-3" id="task-{{ task._id }}"> {# Added ID for potential linking #}
-    <div class="card-body">
-        <div class="d-flex w-100 justify-content-between align-items-center flex-wrap"> {# Added flex-wrap for smaller screens #}
-            <h5 class="mb-1 me-3">{{ task.name }}</h5> {# Added margin-end #}
-            <small class="text-muted text-nowrap"> {# Added text-nowrap #}
-                 Created: {{ task.created_at.strftime('%Y-%m-%d') if task.created_at else 'N/A' }}
-                 {% if task.due_date %} | Due: {{ task.due_date.strftime('%Y-%m-%d') }} {% endif %}
-            </small>
-        </div>
-
-        {% if task.description %}
-             {# Use pre-wrap to preserve line breaks in description #}
-             <p class="mb-1" style="white-space: pre-wrap;">{{ task.description | truncate(250) }}</p>
-        {% endif %}
-
-        {# Display Assignee and Last Updated #}
-        <div class="my-2 d-flex justify-content-between flex-wrap">
-             <small class="text-muted me-3"> {# Added margin-end #}
-                 Assigned to:
-                 <strong style="color: #a2d2ff;">
-                     {# Look up username from the dictionary, handle potential None for task.assigned_to #}
-                     {% set assignee_id_str = task.assigned_to|string if task.assigned_to else None %}
-                     {{ users_dict.get(assignee_id_str) if assignee_id_str and users_dict else 'Unassigned' }}
-                 </strong>
-             </small>
-             {% if task.updated_at and task.updated_at != task.created_at %}
-                 <small class="text-muted">Last Updated: {{ task.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
-             {% endif %}
-        </div>
-
-
-        <div class="d-flex justify-content-between align-items-center mt-2">
-             {# Status Update Form #}
-             <form method="POST" action="{{ url_for('projects.update_task_status_route', project_id=project_id, task_id=task._id) }}" class="d-inline-flex align-items-center">
-                 <select name="status" class="form-select form-select-sm me-2" style="width: auto; background-color: rgba(11, 19, 43, 0.9); color: #e0f2ff; border-color:#3a506b;" onchange="this.form.submit()" title="Change Status">
-                     {# Use task.status for selection #}
-                     <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
-                     <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                     <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
-                     {# Add other statuses if needed #}
-                 </select>
-             </form>
-
-             {# Action Buttons #}
-             <div class="task-actions">
-                  {# Edit Task Button #}
-                  <a href="{{ url_for('projects.edit_task', project_id=project_id, task_id=task._id) }}" class="btn btn-sm btn-pandora-secondary" title="Edit Task">
-                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>
-                  </a>
-                  {# Delete Task Button #}
-                  <form method="POST" action="{{ url_for('projects.delete_task_route', project_id=project_id, task_id=task._id) }}" class="d-inline delete-confirm" data-confirm-message="Are you sure you want to delete task '{{ task.name }}'?">
-                      <button type="submit" class="btn btn-sm btn-pandora-danger" title="Delete Task">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-                      </button>
-                  </form>
-             </div>
+{# Represents a single task item in a list #}
+<div class="list-group-item list-group-item-action list-item-pandora task-item mb-2">
+    <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1 task-name">{{ task.name }}</h5>
+        <small class="text-muted">
+             {% if task.due_date %}Due: {{ task.due_date.strftime('%Y-%m-%d') }}{% endif %}
+        </small>
+    </div>
+    <p class="mb-1 task-description">{{ task.description | truncate(150, True) if task.description else 'No description.' }}</p>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+         <form action="{{ url_for('projects.update_task_status_route', project_id=project._id, task_id=task._id) }}" method="POST" class="d-inline-block">
+             <label for="status-{{ task._id }}" class="visually-hidden">Update Status</label>
+             <select name="status" id="status-{{ task._id }}" class="form-select form-select-sm d-inline-block w-auto me-2 status-select-pandora" onchange="this.form.submit()">
+                 {% set possible_statuses = ["To Do", "In Progress", "Done", "Blocked", "Review"] %}
+                 {% for status_option in possible_statuses %}
+                    <option value="{{ status_option }}" {{ 'selected' if status_option == task.status else '' }}>
+                        {{ status_option }}
+                    </option>
+                 {% endfor %}
+             </select>
+             <noscript><button type="submit" class="btn btn-sm btn-pandora-secondary">Update</button></noscript>
+         </form>
+        <div>
+            {# Add Edit Button (Link to Edit Task Route) #}
+            <!-- <a href="{{ url_for('projects.edit_task', project_id=project._id, task_id=task._id) }}" class="btn btn-sm btn-pandora-secondary me-2" title="Edit Task">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                   <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+                 </svg>
+             </a> -->
+            {# Delete Task Button #}
+            <form action="{{ url_for('projects.delete_task', project_id=project._id, task_id=task._id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete task \'{{ task.name }}\'?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Task">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                      <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                    </svg>
+                </button>
+            </form>
         </div>
     </div>
+    <small class="text-muted task-meta">
+        Created: {{ task.created_at.strftime('%Y-%m-%d %H:%M') if task.created_at else 'N/A' }} UTC
+        {# | Assigned to: {{ task.assigned_to }} #}
+    </small>
 </div>
-{% endmacro %}
-
-
-{# --- Dashboard Task Macro (Remains the same for now) --- #}
-{% macro render_dashboard_task(task) %}
-     <li class="list-group-item d-flex justify-content-between align-items-center" style="background: transparent; border-color: #3a506b;">
-         <div>
-             {# Link to project detail anchored to the task #}
-             <a href="{{ url_for('projects.project_detail', project_id=task.project_id, _anchor='task-' + task.task_id|string) }}" class="fw-bold">{{ task.task_name }}</a> <br>
-             <small class="text-muted">In: {{ task.project_name }} {% if task.task_due_date %}| Due: {{ task.task_due_date.strftime('%Y-%m-%d') }}{% endif %}</small>
-         </div>
-         <span class="badge rounded-pill status-{{ task.task_status|lower|replace(' ', '') }}">{{ task.task_status }}</span>
-     </li>
-{% endmacro %}

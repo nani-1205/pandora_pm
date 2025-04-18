@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Manage Users</h2>
-<p>Oversee the inhabitants of this system.</p>
+<h1 class="mb-4">Manage Users</h1>
 
-<div class="table-responsive-pandora mt-4">
+{% if users %}
+<div class="table-responsive">
     <table class="table table-pandora table-hover">
         <thead>
             <tr>
                 <th>Username</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Registered</th>
+                <th>Registered On</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -20,37 +20,35 @@
             <tr>
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
+                <td><span class="badge role-badge role-{{ user.role }}">{{ user.role|capitalize }}</span></td>
+                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }} UTC</td>
                 <td>
-                     <form method="POST" action="{{ url_for('admin.set_user_role', user_id=user._id) }}" class="d-inline-flex align-items-center">
-                         <select name="role" class="form-select form-select-sm me-2" style="width: auto; background-color: rgba(11, 19, 43, 0.9); color: #e0f2ff; border-color:#3a506b;">
-                             <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
-                             <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
-                         </select>
-                         <button type="submit" class="btn btn-sm btn-pandora-secondary" title="Set Role">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
-                                 <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022"/>
-                             </svg>
-                         </button>
-                     </form>
+                   <form action="{{ url_for('admin.set_user_role', user_id=user._id) }}" method="POST" class="d-inline-block">
+                       <select name="role" class="form-select form-select-sm d-inline-block w-auto me-2">
+                           <option value="user" {{ 'selected' if user.role == 'user' else '' }}>User</option>
+                           <option value="admin" {{ 'selected' if user.role == 'admin' else '' }}>Admin</option>
+                       </select>
+                       <button type="submit" class="btn btn-sm btn-pandora-secondary"
+                               {% if current_user.id == user._id %}
+                               {# Basic check to prevent self-demotion - more robust check in route #}
+                               {# onclick="return confirm('Are you sure you want to change your own role?');" #}
+                               {% endif %}
+                               >Set Role</button>
+                   </form>
+                   {# Add Delete button with caution and confirmation #}
+                   <!--
+                   <form action="{{ url_for('admin.delete_user', user_id=user._id) }}" method="POST" class="d-inline-block ms-2" onsubmit="return confirm('Are you absolutely sure you want to delete user {{ user.username }}? This cannot be undone.');">
+                        <button type="submit" class="btn btn-sm btn-danger" {% if current_user.id == user._id %}disabled title="Cannot delete yourself"{% endif %}>Delete</button>
+                   </form>
+                   -->
                 </td>
-                 <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</td>
-                <td>
-                    {# Add Edit User Link/Button if implemented #}
-                    {# <a href="#" class="btn btn-sm btn-pandora-secondary me-1">Edit</a> #}
-                    {# Add Delete User Form/Button (use confirmation) #}
-                    {#
-                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user._id) }}" class="d-inline delete-confirm" data-confirm-message="Delete user '{{ user.username }}'? This cannot be undone!">
-                        <button type="submit" class="btn btn-sm btn-pandora-danger">Delete</button>
-                    </form>
-                    #}
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="text-center">No users found.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% else %}
+<p>No users found (except maybe you!).</p>
+{% endif %}
+
 {% endblock %}

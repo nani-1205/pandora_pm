@@ -1,17 +1,13 @@
 # pandora_pm/app/__init__.py
-import os
-from flask import Flask, render_template
-from config import config_by_name
+from flask import Flask, render_template, session
+from config import get_config, selected_config
 from .extensions import mongo, login_manager, bcrypt
-from datetime import datetime # Import datetime
+from datetime import datetime
 
-def create_app(config_name=None):
+def create_app():
     """Application Factory Function"""
-    if config_name is None:
-        config_name = os.getenv('FLASK_ENV', 'default')
-
     app = Flask(__name__)
-    app.config.from_object(config_by_name[config_name])
+    app.config.from_object(selected_config) # Use the pre-selected config
 
     # Initialize extensions
     mongo.init_app(app)
@@ -23,7 +19,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
     from .main import bp as main_bp
-    app.register_blueprint(main_bp)
+    app.register_blueprint(main_bp) # No prefix for main routes like dashboard
 
     from .admin import bp as admin_bp
     app.register_blueprint(admin_bp, url_prefix='/admin')
@@ -31,24 +27,38 @@ def create_app(config_name=None):
     from .projects import bp as projects_bp
     app.register_blueprint(projects_bp, url_prefix='/projects')
 
-    # Error Handlers
+    # --- Context Processors ---
+    # Make variables available to all templates
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.utcnow}
+
+    # --- Register Error Handlers ---
+    # Make sure templates/errors/ directory exists with 403.html, 404.html, 500.html
     @app.errorhandler(403)
     def forbidden(error):
-        return render_template('errors/403.html', title='Forbidden'), 403
+        return render_template('errors/403.html', title="Forbidden"), 403
 
     @app.errorhandler(404)
     def page_not_found(error):
-        return render_template('errors/404.html', title='Page Not Found'), 404
+        return render_template('errors/404.html', title="Page Not Found"), 404
 
     @app.errorhandler(500)
     def internal_server_error(error):
-        # Log the error in production
-        # app.logger.error(f'Server Error: {error}', exc_info=True)
-        return render_template('errors/500.html', title='Server Error'), 500
+        # Log the error in a real app
+        print(f"Server Error: {error}")
+        # Optional: Rollback DB session if using transactions
+        return render_template('errors/500.html', title="Server Error"), 500
 
-    # Context processor to inject variables into all templates
-    @app.context_processor
-    def inject_now():
-        return {'now': datetime.utcnow()} # For footer copyright year
+    with app.app_context():
+        # Ensure indexes are created on startup (important for performance and uniqueness)
+        # Adjust index creation as needed based on your queries
+        User.get_collection().create_index('username', unique=True)
+        User.get_collection().create_index('email', unique=True)
+        get_projects_collection().create_index('owner_id')
+        get_projects_collection().create_index('tasks._id') # Index embedded task IDs
+        print("Database indexes ensured.")
 
+
+    print(f"App created with config: {type(selected_config).__name__}")
     return app

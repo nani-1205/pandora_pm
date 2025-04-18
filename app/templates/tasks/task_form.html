@@ -1,75 +1,75 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ 'Edit Task' if task else 'Add New Task' }}</h2>
-{# Show project name using passed project object #}
-<h4 class="text-muted mb-4">Project: <a href="{{ url_for('projects.project_detail', project_id=project._id) }}">{{ project.name }}</a></h4>
-<hr class="mb-4">
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb breadcrumb-pandora">
+    <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">Projects</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project._id) }}">{{ project.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+  </ol>
+</nav>
 
-{# Determine action URL based on whether editing or creating #}
-{% set action_url = url_for('projects.edit_task', project_id=project._id, task_id=task._id) if task else url_for('projects.new_task', project_id=project._id) %}
+<h1 class="mb-4 form-title-pandora">{{ title }}</h1>
 
- <form method="POST" action="{{ action_url }}">
-    {# Add CSRF token if using Flask-WTF: {{ form.hidden_tag() }} #}
-    <div class="row">
-        <div class="col-md-8">
-            <div class="mb-3">
-                {# Use task object for pre-filling on edit, otherwise use passed args (name, description etc) #}
-                <label for="name" class="form-label">Task Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="name" name="name" required value="{{ name or (task.name if task else '') }}">
-            </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="5">{{ description or (task.description if task else '') }}</textarea>
-            </div>
-        </div>
-         <div class="col-md-4">
-              {# Add Status dropdown - needed for Edit #}
-              {% if task %} {# Only show status dropdown when editing #}
-              <div class="mb-3">
-                 <label for="status" class="form-label">Status</label>
-                 <select class="form-select" id="status" name="status">
-                     {% set current_status = status or task.status or 'To Do' %}
-                     <option value="To Do" {% if current_status == 'To Do' %}selected{% endif %}>To Do</option>
-                     <option value="In Progress" {% if current_status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                     <option value="Done" {% if current_status == 'Done' %}selected{% endif %}>Done</option>
-                      {# Add other statuses if needed #}
-                 </select>
-             </div>
-              {% endif %}
+<form method="POST" action="" novalidate> {# Action URL set by route #}
+    {# CSRF token if using Flask-WTF #}
 
-             <div class="mb-3">
-                <label for="due_date" class="form-label">Due Date</label>
-                 {# Pre-fill date carefully #}
-                 {% set current_due_date = due_date or (task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '') %}
-                <input type="date" class="form-control" id="due_date" name="due_date" value="{{ current_due_date }}">
-            </div>
-
-             <!-- Assignee Dropdown -->
-             <div class="mb-3">
-                 <label for="assigned_to" class="form-label">Assign To</label>
-                 <select class="form-select" id="assigned_to" name="assigned_to">
-                     <option value="">-- Unassigned --</option>
-                     {# Check if users list exists before looping #}
-                     {% if users %}
-                         {% for user in users %}
-                             {# Pre-select based on passed assigned_to_id (from POST error) or task data (from GET edit) #}
-                             {% set current_assignee_id = assigned_to_id or (task.assigned_to|string if task and task.assigned_to else '') %}
-                             <option value="{{ user._id }}" {% if current_assignee_id == user._id|string %}selected{% endif %}>
-                                 {{ user.username }}
-                             </option>
-                         {% endfor %}
-                     {% endif %}
-                 </select>
-             </div>
-             <!-- End Assignee Dropdown -->
-
-        </div>
+    <div class="mb-3">
+        <label for="name" class="form-label">Task Name</label>
+        <input type="text" class="form-control form-control-pandora" id="name" name="name" required
+               value="{{ request.form['name'] if request.form['name'] is defined else (task.name if task else '') }}">
     </div>
 
-    <div class="mt-4">
-        <button type="submit" class="btn btn-pandora">{{ 'Save Changes' if task else 'Add Task' }}</button>
-        <a href="{{ url_for('projects.project_detail', project_id=project._id) }}" class="btn btn-pandora-secondary">Cancel</a>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control form-control-pandora" id="description" name="description" rows="3">{{ request.form['description'] if request.form['description'] is defined else (task.description if task else '') }}</textarea>
     </div>
+
+    {% if task %} {# Show status only when editing task #}
+    <div class="mb-3">
+         <label for="status" class="form-label">Status</label>
+         <select class="form-select form-control-pandora" id="status" name="status">
+             {% set current_status = request.form['status'] if request.form['status'] is defined else task.status %}
+             {% set possible_statuses = ["To Do", "In Progress", "Done", "Blocked", "Review"] %}
+             {% for status_option in possible_statuses %}
+                <option value="{{ status_option }}" {{ 'selected' if status_option == current_status else '' }}>
+                    {{ status_option }}
+                </option>
+             {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+
+    <div class="mb-3">
+        <label for="due_date" class="form-label">Due Date (Optional)</label>
+        <input type="date" class="form-control form-control-pandora" id="due_date" name="due_date"
+                value="{{ request.form['due_date'] if request.form['due_date'] is defined else (task.due_date_str if task and task.due_date_str else '') }}">
+    </div>
+
+    {# Optional: Assignee Dropdown #}
+    <!--
+    <div class="mb-3">
+        <label for="assigned_to" class="form-label">Assign To (Optional)</label>
+        <select class="form-select form-control-pandora" id="assigned_to" name="assigned_to">
+            <option value="">-- Unassigned --</option>
+            {% set current_assignee = request.form['assigned_to'] if request.form['assigned_to'] is defined else (task.assigned_to|string if task and task.assigned_to else '') %}
+            {% for user in users %}
+                <option value="{{ user._id }}" {{ 'selected' if user._id|string == current_assignee else '' }}>
+                    {{ user.username }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    -->
+
+     <div class="mt-4">
+        <button type="submit" class="btn btn-pandora me-2">
+            {{ 'Update Task' if task else 'Add Task' }}
+        </button>
+        <a href="{{ url_for('projects.project_detail', project_id=project._id) }}" class="btn btn-pandora-secondary">
+            Cancel
+        </a>
+    </div>
+
 </form>
 {% endblock %}

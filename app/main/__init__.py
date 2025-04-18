@@ -1,4 +1,3 @@
-# pandora_pm/app/main/__init__.py
 from flask import Blueprint
 bp = Blueprint('main', __name__)
-from . import routes
+from . import routes # Import routes after blueprint creation
