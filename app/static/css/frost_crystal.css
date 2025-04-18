@@ -38,7 +38,8 @@ main.container {
 .project-detail-box,
 .task-detail-box,
 .admin-console-box,
-.roadmap-box /* Added roadmap box */
+.roadmap-box, /* Added roadmap box */
+.calendar-container /* Added calendar container */
 {
     background-color: rgba(255, 255, 255, 0.95); /* Mostly opaque white panels */
     padding: 25px;
@@ -51,10 +52,10 @@ main.container {
 .project-list, .task-list { list-style: none; padding-left: 0; }
 .project-list li, .task-list .task-item {
     border-left-width: 4px; border-left-style: solid; padding: 15px; margin-bottom: 15px;
-    /* Reset background if needed, inherited from above rule */
+    /* Reset inherited panel styles if needed */
     /* background-color: transparent; */
-    /* border: none; */ /* Reset border if inherited */
-    /* box-shadow: none; */ /* Reset shadow if inherited */
+    /* border: none; */
+    /* box-shadow: none; */
 }
 
 .navbar {
@@ -210,6 +211,25 @@ a:hover { color: #1f618d; }
 .milestone-date { display: block; font-weight: bold; margin-bottom: 5px; color: #566f82; font-size: 0.9em;} /* Darker gray-blue */
 .milestone-name { font-size: 1.2em; color: #2c3e50; font-weight: bold;} /* Dark Heading color */
 .milestone-desc { font-size: 0.9em; color: #34495e; margin-top: 5px; } /* Body text color */
+
+/* --- Modal Styles (Frost Crystal) --- */
+.modal-content {
+    background-color: rgba(255, 255, 255, 0.98); /* Mostly opaque white */
+    padding: 30px;
+    border-radius: 6px;
+    width: 90%;
+    max-width: 550px;
+    color: #34495e; /* Theme text color */
+    border: 1px solid #d5e3ea; /* Theme border */
+    box-shadow: 0 5px 20px rgba(120, 150, 170, 0.25);
+}
+.modal-content h3 { margin-top: 0; color: #2c3e50; margin-bottom: 20px;}
+.modal-content label { color: #2980b9; /* Theme label color */}
+/* Inputs/Textarea use .form-control styles defined earlier in this file */
+.modal-actions { margin-top: 25px; text-align: right; }
+.modal-error { color: #c0392b; font-size: 0.9em; margin-top: 10px; min-height: 1.2em; text-align: left;}
+/* Ensure checkbox label aligns */
+ .modal-content .form-check label { margin-bottom: 0; }
 
 /* Responsive overrides - Adjust as needed */
 @media (max-width: 768px) {

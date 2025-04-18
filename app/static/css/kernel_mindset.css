@@ -35,7 +35,8 @@ main.container {
 .project-detail-box,
 .task-detail-box,
 .admin-console-box,
-.roadmap-box /* Added roadmap box */
+.roadmap-box, /* Added roadmap box */
+.calendar-container /* Added calendar container */
 {
     background-color: rgba(30, 30, 30, 0.9); /* Slightly lighter dark panel */
     padding: 25px;
@@ -148,11 +149,13 @@ span.active-tag { background-color: #569cd6; color: #1e1e1e; padding: 3px 8px; b
 
 /* Flashes */
 .flash-messages { list-style: none; padding-left: 0; margin-bottom: 20px;}
-.flash-messages .alert { padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px solid transparent; color: #000;}
-.alert-success { background-color: #dff0d8; color: #3c763d; border-color: #d6e9c6;}
-.alert-danger { background-color: #f2dede; color: #a94442; border-color: #ebccd1;}
-.alert-info { background-color: #d9edf7; color: #31708f; border-color: #bce8f1;}
-.alert-warning { background-color: #fcf8e3; color: #8a6d3b; border-color: #faebcc;}
+/* Use dark theme friendly flash messages */
+.flash-messages .alert { padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px solid transparent; }
+.alert-success { background-color: #2b6a3e; color: #d1e7dd; border-color: #3c864f;}
+.alert-danger { background-color: #842029; color: #f8d7da; border-color: #a93b44;}
+.alert-info { background-color: #0f516e; color: #cff4fc; border-color: #1b7498;}
+.alert-warning { background-color: #664d03; color: #fff3cd; border-color: #806104;}
+
 
 /* Statuses */
 .status-to-do { border-left-color: #666666; } /* Medium Gray */
@@ -204,6 +207,25 @@ a:hover { color: #78e0c8; }
 .milestone-date { display: block; font-weight: bold; margin-bottom: 5px; color: #9cdcfe; font-size: 0.9em;} /* Terminal blue */
 .milestone-name { font-size: 1.2em; color: #d4d4d4; font-weight: bold;} /* Heading color */
 .milestone-desc { font-size: 0.9em; color: #cccccc; margin-top: 5px; } /* Lighter gray */
+
+/* --- Modal Styles (Kernel Mindset) --- */
+.modal-content {
+    background-color: rgba(30, 30, 30, 0.98); /* Dark panel, almost opaque */
+    padding: 30px;
+    border-radius: 4px;
+    width: 90%;
+    max-width: 550px;
+    color: #d4d4d4; /* Theme text color */
+    border: 1px solid #444444; /* Theme border */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.55);
+}
+.modal-content h3 { margin-top: 0; color: #d4d4d4; margin-bottom: 20px;}
+.modal-content label { color: #9cdcfe; /* Theme label color */}
+/* Inputs/Textarea use .form-control styles defined earlier in this file */
+.modal-actions { margin-top: 25px; text-align: right; }
+.modal-error { color: #f48771; font-size: 0.9em; margin-top: 10px; min-height: 1.2em; text-align: left;}
+ /* Ensure checkbox label aligns */
+ .modal-content .form-check label { margin-bottom: 0; }
 
 /* Responsive overrides - Adjust as needed */
 @media (max-width: 768px) {

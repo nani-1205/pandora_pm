@@ -38,7 +38,8 @@ main.container {
 .project-detail-box,
 .task-detail-box,
 .admin-console-box,
-.roadmap-box /* Added roadmap box */
+.roadmap-box, /* Added roadmap box */
+.calendar-container /* Added calendar container */
 {
     background-color: rgba(255, 255, 255, 0.9); /* White, slightly transparent panels */
     padding: 25px;
@@ -59,6 +60,10 @@ main.container {
     border-left-style: solid;
     padding: 15px;
     margin-bottom: 15px;
+    /* Reset inherited panel styles if needed */
+    /* background-color: transparent; */
+    /* border: none; */
+    /* box-shadow: none; */
 }
 
 .navbar {
@@ -250,6 +255,25 @@ a:hover { color: #5a2fa7; }
 .milestone-date { display: block; font-weight: bold; margin-bottom: 5px; color: #7a5a9a; font-size: 0.9em;} /* Darker purple */
 .milestone-name { font-size: 1.2em; color: #6a40a8; font-weight: bold;} /* Heading color */
 .milestone-desc { font-size: 0.9em; color: #4a4a4a; margin-top: 5px; } /* Body text color */
+
+/* --- Modal Styles (Amethyst Moon) --- */
+.modal-content {
+    background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 550px;
+    color: #4a4a4a; /* Theme text color */
+    border: 1px solid #e0d0f0; /* Theme border */
+    box-shadow: 0 4px 15px rgba(100, 80, 130, 0.15);
+}
+.modal-content h3 { margin-top: 0; color: #6a40a8; margin-bottom: 20px;}
+.modal-content label { color: #5a3a8a; /* Theme label color */}
+/* Inputs/Textarea use .form-control styles defined earlier in this file */
+.modal-actions { margin-top: 25px; text-align: right; }
+.modal-error { color: #c72c1c; font-size: 0.9em; margin-top: 10px; min-height: 1.2em; text-align: left;}
+/* Ensure checkbox label aligns */
+ .modal-content .form-check label { margin-bottom: 0; }
 
 /* Responsive overrides - Adjust as needed */
 @media (max-width: 768px) {

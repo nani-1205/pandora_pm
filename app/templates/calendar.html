@@ -1,10 +1,10 @@
-<!-- app/templates/calendar.html - OPTION 2 -->
+<!-- app/templates/calendar.html -->
 {% extends "base.html" %}
 
 {% block head_extra %}
     {# FullCalendar CSS v6 - Not needed as separate file for index.global.js #}
 
-    {# Basic CSS for event colors & Modal #}
+    {# Basic CSS for event colors & Modal Overlay - KEEP THESE #}
     <style>
         #calendar { max-width: 1100px; margin: 20px auto; background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;}
         .fc-event { cursor: pointer; }
@@ -16,25 +16,15 @@
         .event-overdue { border: 2px dashed #e74c3c !important; background-color: transparent !important; color: #e74c3c !important; }
         .fc-event-title-container .fc-event-title, .fc-event-time { color: white !important; }
 
-        /* Simple Modal Styles */
+        /* KEEP ONLY OVERLAY STYLE - Content styling moved to theme CSS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;}
-        .modal-content { background: #333; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; color: #eee; border: 1px solid #555; }
-        .modal-content h3 { margin-top: 0; color: #fff;}
-        .modal-content label { display: block; margin-bottom: 5px; color: #ccc;}
-        .modal-content input[type="text"],
-        .modal-content textarea,
-        .modal-content input[type="datetime-local"] { width: 95%; padding: 8px; margin-bottom: 15px; background: #444; border: 1px solid #666; color: #eee; border-radius: 4px;}
-         .modal-content textarea { resize: vertical; min-height: 60px;}
-        .modal-content .modal-actions { margin-top: 20px; text-align: right; }
-        .modal-content .modal-error { color: #f89d9d; font-size: 0.9em; margin-top: 10px; min-height: 1.2em; }
-        .modal-content input[type="checkbox"] { margin-right: 5px; width: auto; }
-        .modal-content .form-group { margin-bottom: 15px; }
+
     </style>
 {% endblock %}
 
 
 {% block content %}
-<div class="calendar-container panel-box">
+<div class="calendar-container panel-box"> {# Content panel styling applied here #}
     <h1>{{ title }}</h1>
     <div id="calendar-loading" style="display: none; text-align: center; padding: 20px;">Loading...</div>
     {% if project %}
@@ -43,39 +33,40 @@
          <p><a href="{{ url_for('main.dashboard') }}">Back to Dashboard</a></p>
     {% endif %}
 
-    <div id='calendar'></div>
+    <div id='calendar'></div> {# FullCalendar renders here #}
 </div>
 
-<!-- Simple Modal for Adding Events -->
+<!-- Modal for Adding Events -->
+{# Apply theme panel styling via modal-content class #}
 <div id="eventModal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content"> {# This div will be styled by the theme CSS now #}
         <h3 id="modalTitle">Add New Event</h3>
-        <div id="modalError" class="modal-error"></div>
+        <div id="modalError" class="modal-error"></div> {# Error message styling in theme CSS #}
         <form id="eventForm" onsubmit="return false;">
-             {# <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> #}
+            {# <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> #}
             <div class="form-group">
                 <label for="eventTitle">Title:</label>
-                <input type="text" id="eventTitle" name="title" required>
+                <input type="text" id="eventTitle" name="title" required class="form-control"> {# Use form-control #}
             </div>
             <div class="form-group">
                 <label for="eventDescription">Description:</label>
-                <textarea id="eventDescription" name="description"></textarea>
+                <textarea id="eventDescription" name="description" class="form-control"></textarea> {# Use form-control #}
             </div>
             <div class="form-group">
                 <label for="eventStart">Start:</label>
-                <input type="datetime-local" id="eventStart" name="start" required>
+                <input type="datetime-local" id="eventStart" name="start" required class="form-control"> {# Use form-control #}
             </div>
             <div class="form-group">
                 <label for="eventEnd">End:</label>
-                <input type="datetime-local" id="eventEnd" name="end" required>
+                <input type="datetime-local" id="eventEnd" name="end" required class="form-control"> {# Use form-control #}
             </div>
-             <div class="form-group form-check" style="display: flex; align-items: center;">
-                 <input type="checkbox" id="eventAllDay" name="allDay" style="margin-right: 10px; width: auto;">
-                 <label for="eventAllDay" style="margin-bottom: 0; font-weight: normal;">All-day event</label>
+             <div class="form-group form-check"> {# Use form-check for layout #}
+                 <input type="checkbox" id="eventAllDay" name="allDay" class="form-check-input"> {# Use form-check-input #}
+                 <label for="eventAllDay" class="form-check-label">All-day event</label> {# Use form-check-label #}
             </div>
             <div class="modal-actions">
-                <button type="button" id="saveEventButton" class="btn btn-primary">Save Event</button>
-                <button type="button" id="closeModalButton" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="saveEventButton" class="btn btn-primary">Save Event</button> {# Use btn classes #}
+                <button type="button" id="closeModalButton" class="btn btn-secondary">Cancel</button> {# Use btn classes #}
             </div>
         </form>
     </div>
@@ -85,6 +76,7 @@
 {# FullCalendar JS v6 #}
 <script src='{{ url_for('static', filename='vendor/fullcalendar/index.global.min.js') }}'></script>
 
+{# JavaScript for Calendar/Modal Interaction #}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
@@ -102,9 +94,7 @@
 
     var eventsUrl = '{{ url_for("main.calendar_events", project_id=project.id if project else None) }}';
     var newEventUrl = '{{ url_for("main.create_calendar_event_api") }}';
-
-    // --- OPTION 2: Force string conversion using %s format ---
-    var currentProjectId = {{ ('%s' % project.id)|tojson if project else 'null' }};
+    var currentProjectId = {{ ('%s' % project.id)|tojson if project else 'null' }}; // Option 2
 
     function openModal(startStr, endStr, allDay) {
         modalTitle.textContent = 'Add New Event';
@@ -115,9 +105,8 @@
         if (allDay) {
              let endDate = endStr ? new Date(endStr) : null;
              let startDate = startStr ? new Date(startStr) : null;
-             if (endDate && startDate && endDate.getTime() > startDate.getTime() && endDate.getUTCDate() !== startDate.getUTCDate()) {
-                eventEnd.value = formatForInput(startStr);
-             } else { eventEnd.value = formatForInput(endStr || startStr); }
+             if (endDate && startDate && endDate.getTime() > startDate.getTime() && endDate.getUTCDate() !== startDate.getUTCDate()) { eventEnd.value = formatForInput(startStr); }
+             else { eventEnd.value = formatForInput(endStr || startStr); }
              eventAllDay.checked = true;
         } else { eventEnd.value = formatForInput(endStr); eventAllDay.checked = false; }
         modal.style.display = 'flex';
