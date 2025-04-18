@@ -2,38 +2,32 @@
 {% extends "base.html" %}
 
 {% block head_extra %} {# Add an extra block in base.html's head if needed, or put directly #}
-    {# FullCalendar CSS #}
-    {# Option 1: Local File #}
-    <link href='{{ url_for('static', filename='vendor/fullcalendar/main.min.css') }}' rel='stylesheet' />
-    {# Option 2: CDN #}
-    {# <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/main.min.css' rel='stylesheet' /> #}
+    {# REMOVED FullCalendar CSS link - v6 bundles core CSS in JS #}
 
-    {# Basic CSS for event colors - place here or in theme css #}
+    {# Basic CSS for event colors & Modal #}
     <style>
         #calendar { max-width: 1100px; margin: 20px auto; background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;} /* Give calendar area a background */
         .fc-event { cursor: pointer; } /* Indicate events are clickable */
         .fc-event, .fc-event-dot { /* Use theme variables or specific colors */ }
         .event-task { background-color: #3498db; border-color: #2980b9; }
         .event-milestone { background-color: #f39c12; border-color: #e67e22; }
-        /* .event-work-package { background-color: #9b59b6; border-color: #8e44ad; } */
+        .event-custom { background-color: #9b59b6; border-color: #8e44ad; } /* Purple for custom */
         .event-done { background-color: #2ecc71 !important; border-color: #27ae60 !important; opacity: 0.7; }
-        .event-overdue { border: 2px dashed #e74c3c !important; background-color: transparent; color: #e74c3c !important; }
-
-        /* Adjust link colors inside events if needed by theme */
+        .event-overdue { border: 2px dashed #e74c3c !important; background-color: transparent !important; color: #e74c3c !important; }
         .fc-event-title-container .fc-event-title, .fc-event-time { color: white !important; } /* Default white text */
 
-        /* --- Theme-specific overrides for calendar elements if needed --- */
-        /* Example for dark themes */
-        /* body.theme-noir_flow .fc .fc-button-primary, body.theme-kernel_mindset .fc .fc-button-primary { */
-        /*    background-color: #444; border-color: #555; color: #ccc; */
-        /* } */
-        /* body.theme-noir_flow .fc .fc-toolbar-title, body.theme-kernel_mindset .fc .fc-toolbar-title { */
-        /*    color: #ddd; */
-        /* } */
-        /* body.theme-noir_flow .fc .fc-daygrid-day-number, body.theme-kernel_mindset .fc .fc-daygrid-day-number { */
-        /*     color: #aaa; */
-        /* } */
-        /* --- End Theme Overrides --- */
+        /* Simple Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;}
+        .modal-content { background: #333; /* Dark background for modal */ padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; color: #eee; /* Light text */ border: 1px solid #555; }
+        .modal-content h3 { margin-top: 0; color: #fff;}
+        .modal-content label { display: block; margin-bottom: 5px; color: #ccc;}
+        .modal-content input[type="text"],
+        .modal-content textarea,
+        .modal-content input[type="datetime-local"] { width: 95%; padding: 8px; margin-bottom: 15px; background: #444; border: 1px solid #666; color: #eee; border-radius: 4px;}
+         .modal-content textarea { resize: vertical; min-height: 60px;}
+        .modal-content .modal-actions { margin-top: 20px; text-align: right; }
+        .modal-content .modal-error { color: #f89d9d; font-size: 0.9em; margin-top: 10px; }
+        .modal-content input[type="checkbox"] { margin-right: 5px; }
     </style>
 {% endblock %}
 
@@ -41,67 +35,160 @@
 {% block content %}
 <div class="calendar-container panel-box"> {# Optional class #}
     <h1>{{ title }}</h1>
+    <div id="calendar-loading" style="display: none; text-align: center; padding: 20px;">Loading...</div>
+    {# Back links etc. #}
     {% if project %}
-        <p>
-            <a href="{{ url_for('main.project_detail', project_id=project.id) }}">Back to Project</a> |
-            <a href="{{ url_for('main.project_roadmap', project_id=project.id) }}">View Roadmap</a>
-        </p>
+        <p><a href="{{ url_for('main.project_detail', project_id=project.id) }}">Back to Project</a> | <a href="{{ url_for('main.project_roadmap', project_id=project.id) }}">View Roadmap</a></p>
     {% else %}
          <p><a href="{{ url_for('main.dashboard') }}">Back to Dashboard</a></p>
     {% endif %}
 
     {# Div where the calendar will be rendered #}
     <div id='calendar'></div>
-
 </div>
 
-{# Add FullCalendar JS #}
-{# Option 1: Local File #}
-<script src='{{ url_for('static', filename='vendor/fullcalendar/main.min.js') }}'></script>
-{# Option 2: CDN #}
-{# <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/main.min.js'></script> #}
+<!-- Simple Modal for Adding Events -->
+<div id="eventModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add New Event</h3>
+        <div id="modalError" class="modal-error"></div>
+        <form id="eventForm">
+             {# <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> #}
+            <div class="form-group">
+                <label for="eventTitle">Title:</label>
+                <input type="text" id="eventTitle" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="eventDescription">Description:</label>
+                <textarea id="eventDescription" name="description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="eventStart">Start:</label>
+                <input type="datetime-local" id="eventStart" name="start" required>
+            </div>
+            <div class="form-group">
+                <label for="eventEnd">End:</label>
+                <input type="datetime-local" id="eventEnd" name="end" required>
+            </div>
+            <div class="form-group">
+                 <input type="checkbox" id="eventAllDay" name="allDay">
+                 <label for="eventAllDay">All-day event</label>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="saveEventButton" class="btn btn-primary">Save Event</button>
+                <button type="button" id="closeModalButton" class="btn btn-secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{# FullCalendar JS #}
+{# Option 1: Local File (Uses v6 naming) #}
+<script src='{{ url_for('static', filename='vendor/fullcalendar/index.global.min.js') }}'></script> {# <-- Ensure this file exists #}
+{# Option 2: CDN (v6 Example) #}
+{# <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js'></script> #}
 
 <script>
+  // --- THE REST OF THE JAVASCRIPT REMAINS THE SAME ---
   document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
+    var modal = document.getElementById('eventModal');
+    var modalTitle = document.getElementById('modalTitle');
+    var modalError = document.getElementById('modalError');
+    var eventForm = document.getElementById('eventForm');
+    var saveButton = document.getElementById('saveEventButton');
+    var closeButton = document.getElementById('closeModalButton');
+    // Form fields
+    var eventTitle = document.getElementById('eventTitle');
+    var eventDescription = document.getElementById('eventDescription');
+    var eventStart = document.getElementById('eventStart');
+    var eventEnd = document.getElementById('eventEnd');
+    var eventAllDay = document.getElementById('eventAllDay');
+
+    // API endpoint URLs
     var eventsUrl = '{{ url_for("main.calendar_events", project_id=project.id if project else None) }}';
+    var newEventUrl = '{{ url_for("main.create_calendar_event_api", project_id=project.id if project else None) }}';
+
+    function openModal(startStr, endStr, allDay) {
+        modalTitle.textContent = 'Add New Event';
+        modalError.textContent = '';
+        eventForm.reset();
+        const formatForInput = (isoStr) => isoStr ? isoStr.substring(0, 16) : '';
+        eventStart.value = formatForInput(startStr);
+        if (allDay && startStr && endStr && startStr.split('T')[0] === endStr.split('T')[0]) {
+             eventEnd.value = formatForInput(startStr);
+        } else {
+             eventEnd.value = formatForInput(endStr);
+        }
+        eventAllDay.checked = allDay;
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() { modal.style.display = 'none'; }
+    closeButton.addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+
+    saveButton.addEventListener('click', function() {
+        modalError.textContent = '';
+        const title = eventTitle.value.trim();
+        const description = eventDescription.value.trim();
+        const start = eventStart.value;
+        const end = eventEnd.value;
+        const allDay = eventAllDay.checked;
+
+        if (!title || !start || !end) { modalError.textContent = 'Title, Start, and End times are required.'; return; }
+        if (!allDay && new Date(end) <= new Date(start)) { modalError.textContent = 'End time must be after start time.'; return; }
+
+        const eventData = {
+            title: title, description: description,
+            start: new Date(start).toISOString(), end: new Date(end).toISOString(),
+            allDay: allDay
+        };
+
+        fetch(newEventUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => { throw new Error(errData.message || `HTTP error! status: ${response.status}`); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal();
+                calendar.refetchEvents();
+            } else {
+                 modalError.textContent = 'Error: ' + (data.message || 'Could not save event.');
+            }
+        })
+        .catch((error) => {
+            console.error('Error saving event:', error);
+            modalError.textContent = 'Save failed: ' + error.message;
+        });
+    });
 
     var calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,listWeek' // Removed timeGridDay for simplicity
-      },
-      events: {
-          url: eventsUrl,
-          failure: function() {
-            alert('There was an error while fetching events!');
-          }
-      },
+      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+      events: { url: eventsUrl, failure: function() { alert('Error fetching calendar events!'); } },
+      selectable: true,
+      select: function(selectInfo) { openModal(selectInfo.startStr, selectInfo.endStr, selectInfo.allDay); calendar.unselect(); },
       editable: false,
-      selectable: false,
-      dayMaxEvents: true, // Show "more" link
-       eventTimeFormat: {
-            hour: 'numeric', minute: '2-digit', meridiem: 'short'
-       },
-       eventClick: function(info) {
-            // Prevent default browser navigation if URL exists
+      dayMaxEvents: true,
+      eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+      eventClick: function(info) {
             info.jsEvent.preventDefault();
-            if (info.event.url) {
-                // Open link in same tab
-                window.location.href = info.event.url;
-            }
+            if (info.event.url) { window.location.href = info.event.url; }
        },
        loading: function(isLoading) {
-            // Optional: Show/hide a loading indicator element
-            var loadingEl = document.getElementById('calendar-loading'); // Add <div id="calendar-loading"></div> somewhere
-            if (loadingEl) {
-                 loadingEl.style.display = isLoading ? 'block' : 'none';
-            }
+            var loadingEl = document.getElementById('calendar-loading');
+            if (loadingEl) loadingEl.style.display = isLoading ? 'block' : 'none';
         }
     });
-
     calendar.render();
   });
 </script>
