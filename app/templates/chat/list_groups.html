@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="panel-box"> {# Use panel-box for theme consistency #}
+    <h1>Chat Groups for {{ project.name }}</h1>
+    <p><a href="{{ url_for('main.project_detail', project_id=project.id) }}">Back to Project</a></p>
+
+    {% if current_user.is_admin %} {# Or project owner #}
+    <p><a href="{{ url_for('main.create_chat_group', project_id=project.id) }}" class="btn btn-primary">Create New Group</a></p>
+    {% endif %}
+
+    {% if groups %}
+        <ul class="list-group"> {# Basic list for now, add specific styling if needed #}
+            {% for group in groups %}
+                <li class="list-group-item">
+                    <a href="{{ url_for('main.view_chat_group', project_id=project.id, group_id=group.id) }}" style="font-size: 1.1em; font-weight: bold;">{{ group.name }}</a>
+                    <small style="display: block; color: #aaa;">Created by {{ group.created_by.username }} on {{ group.created_at.strftime('%Y-%m-%d') }}</small>
+                    {# Add delete button for admin later #}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No chat groups created for this project yet.</p>
+         {% if current_user.is_admin %}
+             <a href="{{ url_for('main.create_chat_group', project_id=project.id) }}" class="btn btn-sm btn-primary">Create First Group</a>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# Basic styling for list group items - can be moved to theme CSS #}
+<style>
+    .list-group { padding-left: 0; list-style: none; }
+    .list-group-item {
+        background-color: rgba(0,0,0,0.1); /* Theme dependent slight background */
+        margin-bottom: 10px;
+        border-radius: 5px;
+        padding: 15px 20px;
+        border: 1px solid rgba(128,128,128,0.2);
+    }
+</style>
+{% endblock %}

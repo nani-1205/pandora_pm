@@ -1,0 +1,12 @@
+{# Partial template for displaying a single chat message #}
+{# Expects 'message' variable #}
+<div class="message-item">
+    <small>
+        <strong>{{ message.sender.username if message.sender else '[Deleted User]' }}</strong>
+        - {{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}
+    </small>
+    <div class="message-content">
+        {# Use |e filter for basic XSS protection on user content #}
+        {{ message.content | e }}
+    </div>
+</div>

@@ -1,37 +1,26 @@
 # app/forms.py
 from flask_wtf import FlaskForm
-# --- Import necessary field types ---
 from wtforms import (
     StringField, PasswordField, SubmitField, BooleanField, TextAreaField,
     SelectField, DateField, DateTimeLocalField # Added DateTimeLocalField
 )
 from wtforms.validators import (
-    DataRequired, Length, Email, EqualTo, ValidationError, Optional # Import Optional validator
+    DataRequired, Length, Email, EqualTo, ValidationError, Optional
 )
-# --- Import theme choices and User model ---
-from .models import User, Project, TASK_STATUS_CHOICES, THEME_CHOICES, AVAILABLE_THEMES, WorkPackage # Import User and Theme constants
-# --- Import datetime for form validation ---
+from .models import User, Project, TASK_STATUS_CHOICES, THEME_CHOICES, AVAILABLE_THEMES, WorkPackage
 from datetime import datetime
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=50)])
-    email = StringField('Email',
-                        validators=[DataRequired(), Email(), Length(max=100)])
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=50)])
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=100)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    confirm_password = PasswordField('Confirm Password',
-                                     validators=[DataRequired(), EqualTo('password')])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
-        user = User.objects(username=username.data).first()
-        if user:
-            raise ValidationError('That username is taken. Please choose a different one.')
-
+        if User.objects(username=username.data).first(): raise ValidationError('Username taken.')
     def validate_email(self, email):
-        user = User.objects(email=email.data).first()
-        if user:
-            raise ValidationError('That email is already registered. Please use a different one or log in.')
+        if User.objects(email=email.data).first(): raise ValidationError('Email already registered.')
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -78,56 +67,47 @@ class TaskForm(FlaskForm):
             wps = WorkPackage.objects(project=project_id).order_by('name')
             wp_choices.extend([(str(wp.id), wp.name) for wp in wps])
             self.work_package.choices = wp_choices
-        else:
-             self.work_package.choices = [('', '--- Select Project First ---')]
+        else: self.work_package.choices = [('', '--- Select Project First ---')]
 
 class UpdateTaskStatusForm(FlaskForm):
     status = SelectField('Status', choices=TASK_STATUS_CHOICES, validators=[DataRequired()])
     submit = SubmitField('Update Status')
 
 class UpdateProfileForm(FlaskForm):
-    username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=50)])
-    email = StringField('Email',
-                        validators=[DataRequired(), Email(), Length(max=100)])
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=50)])
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=100)])
     theme = SelectField('Theme', choices=THEME_CHOICES, validators=[DataRequired()])
     submit = SubmitField('Update Profile')
 
     def __init__(self, original_username, original_email, *args, **kwargs):
         super(UpdateProfileForm, self).__init__(*args, **kwargs)
-        self.original_username = original_username
-        self.original_email = original_email
-
+        self.original_username = original_username; self.original_email = original_email
     def validate_username(self, username):
-        if username.data != self.original_username:
-            user = User.objects(username=username.data).first()
-            if user:
-                raise ValidationError('That username is already taken.')
-
+        if username.data != self.original_username and User.objects(username=username.data).first(): raise ValidationError('Username taken.')
     def validate_email(self, email):
-         if email.data != self.original_email:
-            user = User.objects(email=email.data).first()
-            if user:
-                raise ValidationError('That email is already registered.')
-
+        if email.data != self.original_email and User.objects(email=email.data).first(): raise ValidationError('Email registered.')
     def validate_theme(self, theme):
-        if theme.data not in AVAILABLE_THEMES:
-            raise ValidationError('Invalid theme selected.')
+        if theme.data not in AVAILABLE_THEMES: raise ValidationError('Invalid theme.')
 
-# --- CalendarEventForm DEFINITION ---
 class CalendarEventForm(FlaskForm):
     title = StringField('Event Title', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Description', validators=[Optional()])
-    # Use DateTimeLocalField for easier browser picker integration
     start_time = DateTimeLocalField('Start Time', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
     end_time = DateTimeLocalField('End Time', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
     all_day = BooleanField('All Day Event')
     submit = SubmitField('Save Event')
 
-    # Custom validation: end time must be after start time
     def validate_end_time(self, end_time):
         if end_time.data and self.start_time.data and end_time.data <= self.start_time.data:
-            # For all-day events, end should be at least the same day or later
-            # More precise check might be needed depending on how all-day end is stored
             if not (self.all_day.data and end_time.data.date() >= self.start_time.data.date()):
                  raise ValidationError('End time must be after start time.')
+
+# --- ChatGroup Form (NEW) ---
+class ChatGroupForm(FlaskForm):
+    name = StringField('Group Name', validators=[DataRequired(), Length(min=3, max=100)])
+    submit = SubmitField('Create Group')
+
+# --- ChatMessage Form (NEW) ---
+class ChatMessageForm(FlaskForm):
+    content = TextAreaField('Message', validators=[DataRequired(), Length(max=2000)])
+    submit = SubmitField('Send') # Button might be handled by JS

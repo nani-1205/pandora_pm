@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chat-container panel-box"> {# Panel styling #}
+    <h2>Chat: {{ group.name }}</h2>
+    <p>
+        <a href="{{ url_for('main.project_detail', project_id=project.id) }}">Back to Project</a> |
+        <a href="{{ url_for('main.list_chat_groups', project_id=project.id) }}">All Groups</a>
+    </p>
+
+    {# Message Display Area #}
+    <div id="message-list" class="message-list-box">
+        {% for message in messages %}
+            {% include 'chat/_message_item.html' %} {# Use partial for message display #}
+        {% else %}
+            <p class="text-muted" style="text-align: center; padding: 20px;">No messages yet. Start the conversation!</p>
+        {% endfor %}
+    </div>
+
+    {# Message Input Form #}
+    <div class="message-form-box" style="margin-top: 20px;">
+         {# Submission handled via JS/AJAX #}
+        <form id="messageForm" method="POST" action="{{ url_for('main.post_chat_message', project_id=project.id, group_id=group.id) }}">
+            {{ form.hidden_tag() }} {# Include CSRF token #}
+            <div class="form-group">
+                {{ form.content(class="form-control", rows="3", placeholder="Type your message...", required=true) }}
+                 {% if form.content.errors %}<div class="errors">{% for error in form.content.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Send</button>
+            <span id="send-error" style="margin-left: 10px; color: #f89d9d; font-size: 0.9em;"></span> {# Error display #}
+        </form>
+    </div>
+</div>
+
+{# Basic styling for chat - Move to theme CSS files for better theme integration #}
+<style>
+    .message-list-box {
+        height: 55vh; /* Adjust height as needed */
+        overflow-y: scroll;
+        border: 1px solid rgba(128,128,128,0.3); /* Theme dependent */
+        margin-bottom: 15px;
+        padding: 15px;
+        border-radius: 5px;
+        background-color: rgba(0,0,0,0.1); /* Theme dependent */
+    }
+    .message-item {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px dotted rgba(128,128,128,0.2); /* Theme dependent */
+    }
+    .message-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .message-item small {
+        color: #aaa; /* Theme dependent */
+        font-size: 0.8em;
+    }
+    .message-item strong {
+        color: #eee; /* Theme dependent */
+        margin-right: 5px;
+    }
+    .message-content {
+        margin-top: 5px;
+        white-space: pre-wrap; /* Preserve whitespace/newlines */
+        word-wrap: break-word;
+        font-size: 0.95em;
+        /* color: #ddd; */ /* Theme dependent */
+    }
+    .message-form-box textarea {
+        margin-bottom: 10px;
+    }
+</style>
+
+{# JavaScript for sending messages via AJAX #}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageList = document.getElementById('message-list');
+        const messageForm = document.getElementById('messageForm');
+        const contentInput = messageForm.querySelector('textarea[name="content"]');
+        const sendError = document.getElementById('send-error');
+        const csrfTokenInput = messageForm.querySelector('input[name="csrf_token"]'); // Get CSRF token input
+
+         // Scroll to bottom on initial load
+         messageList.scrollTop = messageList.scrollHeight;
+
+        messageForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Stop default form submission
+            sendError.textContent = ''; // Clear previous errors
+            const content = contentInput.value.trim();
+            const submitButton = messageForm.querySelector('button[type="submit"]');
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : null; // Get token value
+
+            if (!content) return; // Don't send empty messages
+
+            const formData = {
+                content: content,
+                csrf_token: csrfToken // Include CSRF token if it exists
+            };
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Sending...';
+
+            fetch(messageForm.action, { // Use the form's action URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                     // Flask-WTF checks this header by default
+                     'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || `HTTP ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    // Basic Non-Realtime Update: Clear input & maybe add placeholder locally
+                    contentInput.value = '';
+                    // Optionally, create a temporary message element visually
+                    // Or simply rely on user refreshing for now.
+                    // alert('Message sent! Refresh to see.'); // Simple feedback
+
+                    // To see instantly (requires manual refresh for others):
+                     const newMsgHtml = `
+                        <div class="message-item">
+                            <small>
+                                <strong>{{ current_user.username }}</strong>
+                                - Now
+                            </small>
+                            <div class="message-content">
+                                ${content.replace(/</g, "<").replace(/>/g, ">")} {# Basic XSS prevention #}
+                            </div>
+                        </div>`;
+                     messageList.insertAdjacentHTML('beforeend', newMsgHtml);
+                     messageList.scrollTop = messageList.scrollHeight; // Scroll down
+
+                } else {
+                    sendError.textContent = data.message || 'Failed to send.';
+                }
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                sendError.textContent = error.message || 'Network error.';
+            })
+            .finally(() => {
+                 submitButton.disabled = false;
+                 submitButton.textContent = 'Send';
+                 contentInput.focus(); // Keep focus on input
+            });
+        });
+    });
+</script>
+
+{% endblock %}

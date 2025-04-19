@@ -11,17 +11,18 @@
         {# Add Edit/Delete Project buttons if desired #}
         <a href="{{ url_for('main.create_work_package', project_id=project.id) }}" class="btn btn-secondary btn-sm">New Work Package</a>
         <a href="{{ url_for('main.create_milestone', project_id=project.id) }}" class="btn btn-secondary btn-sm">New Milestone</a>
-        <a href="{{ url_for('main.project_roadmap', project_id=project.id) }}" class="btn btn-info btn-sm">View Roadmap</a> {# Changed button style #}
-         <a href="{{ url_for('main.project_calendar', project_id=project.id) }}" class="btn btn-info btn-sm">View Calendar</a> {# Changed button style #}
+        <a href="{{ url_for('main.project_roadmap', project_id=project.id) }}" class="btn btn-info btn-sm">View Roadmap</a>
+        <a href="{{ url_for('main.project_calendar', project_id=project.id) }}" class="btn btn-info btn-sm">View Calendar</a>
+        <a href="{{ url_for('main.list_chat_groups', project_id=project.id) }}" class="btn btn-secondary btn-sm">Chat Groups</a> {# <-- ADDED LINK #}
     </div>
     {% endif %}
 </div>
 
 {# --- Milestones Section --- #}
-<div class="milestones-box panel-box"> {# Optional class #}
+<div class="milestones-box panel-box">
     <h2>Upcoming Milestones</h2>
      {% if current_user.is_admin %}
-        <a href="{{ url_for('main.create_milestone', project_id=project.id) }}" class="btn btn-sm btn-outline-secondary float-right">Add Milestone</a> {# Example add button #}
+        <a href="{{ url_for('main.create_milestone', project_id=project.id) }}" class="btn btn-sm btn-outline-secondary float-right" style="float: right; margin-top: -40px;">Add Milestone</a> {# Example add button #}
     {% endif %}
     {% if milestones %}
     <ul class="milestone-list list-unstyled" style="margin-top: 15px;"> {# Basic list #}
@@ -37,15 +38,18 @@
     </ul>
     {% else %}
         <p>No milestones defined yet.</p>
+        {% if current_user.is_admin %} {# Show button only if no milestones and is admin #}
+             <a href="{{ url_for('main.create_milestone', project_id=project.id) }}" class="btn btn-sm btn-primary">Add First Milestone</a>
+        {% endif %}
     {% endif %}
 </div>
 
 
 {# --- Tasks Section (Grouped by Work Package) --- #}
-<div class="tasks-box panel-box"> {# Optional class #}
+<div class="tasks-box panel-box">
     <h2>Tasks</h2>
      {% if current_user.is_admin %}
-        <a href="{{ url_for('main.create_task', project_id=project.id) }}" class="btn btn-primary float-right">Add New Task</a>
+        <a href="{{ url_for('main.create_task', project_id=project.id) }}" class="btn btn-primary float-right" style="float: right; margin-top: -45px;">Add New Task</a>
     {% endif %}
 
     {# Group tasks by Work Package #}
@@ -78,7 +82,7 @@
                     {% for task in wp_tasks %}
                          {% include 'partials/_task_item.html' %}
                     {% else %}
-                         {# This case shouldn't happen if there were unassigned tasks, but good practice #}
+                         {# This block might not be reached if there are no tasks at all #}
                          <li><small>No tasks found without a work package.</small></li>
                     {% endfor %}
                 </ul>
@@ -86,6 +90,9 @@
         {% endif %}
     {% else %} {# No tasks at all in the project #}
          <p>No tasks have been added to this project yet.</p>
+         {% if current_user.is_admin %}
+            <a href="{{ url_for('main.create_task', project_id=project.id) }}" class="btn btn-sm btn-primary">Add First Task</a>
+        {% endif %}
     {% endfor %}
 
 </div>

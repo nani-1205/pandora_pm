@@ -29,19 +29,12 @@ class User(db.Document, UserMixin):
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
     theme = db.StringField(choices=AVAILABLE_THEMES, default=DEFAULT_THEME, required=True)
 
-    meta = {
-        'indexes': [
-            'email', # Index for login lookup
-            'username' # Index for uniqueness check
-        ]
-    }
+    meta = { 'indexes': [ 'email', 'username' ] }
 
     def set_password(self, password):
-        """Hashes the password and stores it."""
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def check_password(self, password):
-        """Checks if the provided password matches the stored hash."""
         return bcrypt.check_password_hash(self.password_hash, password)
 
     def __repr__(self):
@@ -54,14 +47,7 @@ class Project(db.Document):
     description = db.StringField()
     created_by = db.ReferenceField(User, required=True)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-
-    meta = {
-        'indexes': [
-            'name', # Index for name lookup/uniqueness if needed
-            'created_by' # Index for finding projects by user
-        ]
-    }
-
+    meta = { 'indexes': [ 'name', 'created_by' ] }
     def __repr__(self):
         return f"Project('{self.name}')"
 
@@ -72,17 +58,10 @@ class WorkPackage(db.Document):
     description = db.StringField()
     project = db.ReferenceField(Project, required=True, reverse_delete_rule=db.CASCADE)
     created_by = db.ReferenceField(User, required=True)
-    start_date = db.DateTimeField(null=True, blank=True) # Optional start date
-    end_date = db.DateTimeField(null=True, blank=True)   # Optional end date
+    start_date = db.DateTimeField(null=True, blank=True)
+    end_date = db.DateTimeField(null=True, blank=True)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-
-    meta = {
-        'indexes': [
-            'project', # Index for finding WPs by project
-            ('project', 'name') # Compound index for project-specific name lookup
-        ]
-    }
-
+    meta = { 'indexes': [ 'project', ('project', 'name') ] }
     def __repr__(self):
         return f"WorkPackage('{self.name}', Project: '{self.project.name}')"
 
@@ -95,18 +74,9 @@ class Milestone(db.Document):
     description = db.StringField(null=True, blank=True)
     created_by = db.ReferenceField(User, required=True)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-
-    # Corrected index syntax using explicit compound index
-    meta = {
-        'indexes': [
-            # Index milestones within a project, sorted newest target date first
-            ('project', '-target_date')
-        ]
-    }
-
+    meta = { 'indexes': [ ('project', '-target_date') ] }
     def __repr__(self):
         return f"Milestone('{self.name}', Project: '{self.project.name}', Target: {self.target_date})"
-
 
 # --- Task Model ---
 class Task(db.Document):
@@ -120,18 +90,7 @@ class Task(db.Document):
     created_by = db.ReferenceField(User, required=True)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
     due_date = db.DateTimeField(null=True, blank=True)
-
-    meta = {
-        'indexes': [
-            'project',          # Find tasks by project
-            'assigned_to',      # Find tasks by assignee
-            ('project', 'status'), # Find tasks by status within a project
-            ('project', 'work_package'), # Find tasks by WP within a project
-            ('assigned_to', 'status'), # Find tasks by status for a user (for dashboard)
-            ('assigned_to', 'due_date') # Find tasks by due date for a user
-        ]
-    }
-
+    meta = { 'indexes': [ 'project', 'assigned_to', ('project', 'status'), ('project', 'work_package'), ('assigned_to', 'status'), ('assigned_to', 'due_date') ] }
     def __repr__(self):
         wp_name = f", WP: '{self.work_package.name}'" if self.work_package else ""
         return f"Task('{self.title}', Status: '{self.status}', Project: '{self.project.name}'{wp_name})"
@@ -145,47 +104,57 @@ class CalendarEvent(db.Document):
     end_time = db.DateTimeField(required=True)
     all_day = db.BooleanField(default=False)
     created_by = db.ReferenceField(User, required=True)
-    project = db.ReferenceField(Project, null=True, blank=True, reverse_delete_rule=db.CASCADE) # Optional link to project
+    project = db.ReferenceField(Project, null=True, blank=True, reverse_delete_rule=db.CASCADE)
     created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-
-    # Corrected index syntax using explicit compound index
-    meta = {
-        'indexes': [
-            'project',
-            'created_by',
-            '-start_time', # Simple descending index on start time
-            ('project', '-start_time') # Compound index for project-specific time sorting
-        ]
-    }
-
+    meta = { 'indexes': [ 'project', 'created_by', '-start_time', ('project', '-start_time') ] }
     def __repr__(self):
         proj_name = f", Project: '{self.project.name}'" if self.project else ""
         return f"CalendarEvent('{self.title}', User: '{self.created_by.username}'{proj_name}, Start: {self.start_time})"
 
-    # Method to convert to FullCalendar event object format
     def to_fc_event(self):
-        """Converts this CalendarEvent object into a dict suitable for FullCalendar."""
-        event_class = 'event-custom' # Specific class for styling
-        event_url = None
-        try:
-            # Generate URL only if within a request context
-            event_url = url_for('main.view_calendar_event', event_id=self.id, _external=False)
-        except RuntimeError:
-            # Log or handle the case where url_for cannot be called
-            pass # event_url remains None
+        event_class = 'event-custom'; event_url = None
+        try: event_url = url_for('main.view_calendar_event', event_id=self.id, _external=False)
+        except RuntimeError: pass
+        return { 'id': str(self.id), 'title': self.title, 'start': self.start_time.isoformat(), 'end': self.end_time.isoformat(),
+                 'allDay': self.all_day, 'url': event_url, 'className': event_class,
+                 'extendedProps': { 'type': 'custom_event', 'description': self.description or '', 'project': self.project.name if self.project else None } }
 
-        event_data = {
-            'id': str(self.id), # Use the MongoDB ObjectId as ID
-            'title': self.title,
-            'start': self.start_time.isoformat(),
-            'end': self.end_time.isoformat(),
-            'allDay': self.all_day,
-            'url': event_url, # Use generated URL or None
-            'className': event_class,
-            'extendedProps': {
-                'type': 'custom_event',
-                'description': self.description or '',
-                'project': self.project.name if self.project else None,
-            }
-        }
-        return event_data
+# --- ChatGroup Model (NEW) ---
+class ChatGroup(db.Document):
+    """Represents a chat group associated with a project."""
+    name = db.StringField(required=True, max_length=100)
+    project = db.ReferenceField('Project', required=True, reverse_delete_rule=db.CASCADE)
+    created_by = db.ReferenceField('User', required=True)
+    created_at = db.DateTimeField(default=datetime.datetime.utcnow)
+    # members = db.ListField(db.ReferenceField('User')) # Optional: Explicit members later
+
+    meta = {
+        'indexes': [
+            ('project', 'name') # Find groups by project and name
+        ]
+    }
+
+    def get_messages(self, limit=50):
+        """Helper to get recent messages for this group."""
+        return ChatMessage.objects(group=self).order_by('-timestamp').limit(limit)
+
+    def __repr__(self):
+        return f"ChatGroup('{self.name}', Project: '{self.project.name}')"
+
+# --- ChatMessage Model (NEW) ---
+class ChatMessage(db.Document):
+    """Represents a single message within a chat group."""
+    group = db.ReferenceField('ChatGroup', required=True, reverse_delete_rule=db.CASCADE)
+    sender = db.ReferenceField('User', required=True, reverse_delete_rule=db.NULLIFY) # Keep message if user deleted
+    content = db.StringField(required=True)
+    timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
+
+    meta = {
+        'indexes': [
+            ('group', '-timestamp') # Efficiently get latest messages for a group
+        ]
+    }
+
+    def __repr__(self):
+        sender_name = self.sender.username if self.sender else "[Deleted User]"
+        return f"ChatMessage(Group: '{self.group.name}', Sender: '{sender_name}')"
