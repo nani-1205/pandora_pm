@@ -2,109 +2,177 @@
 from flask import (
     render_template, url_for, flash, redirect, request, abort, Blueprint, current_app, jsonify
 )
+# Import extensions from the extensions file
 from .extensions import db, bcrypt, login_manager
+
+# Import Forms, Models, Decorators
 from .forms import ( # Import ALL forms used
     RegistrationForm, LoginForm, ProjectForm, TaskForm, UpdateTaskStatusForm,
     UpdateProfileForm, WorkPackageForm, MilestoneForm, CalendarEventForm,
     ChatGroupForm, ChatMessageForm # Add chat forms
 )
+# Models are imported here as they depend on extensions now
 from .models import ( # Import ALL models used
     User, Project, Task, WorkPackage, Milestone, CalendarEvent,
     ChatGroup, ChatMessage # Add chat models
 )
 from .decorators import admin_required
+
+# Import Flask-Login utilities
 from flask_login import login_user, current_user, logout_user, login_required
+
+# Import MongoEngine Errors
 from mongoengine.errors import NotUniqueError, ValidationError as MongoValidationError
+
+# Logging
 import logging
 from datetime import datetime, time, timedelta # Import datetime, time, timedelta
 
 log = logging.getLogger(__name__)
+
+
+# Create a Blueprint instance
 main_routes = Blueprint('main', __name__)
 
 # --- Core Routes ---
+
 @main_routes.route('/')
 @main_routes.route('/index')
 def index():
-    if current_user.is_authenticated: return redirect(url_for('main.dashboard'))
+    """Landing page."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard')) # Use blueprint name
     return render_template('index.html', title='Welcome')
 
 @main_routes.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated: return redirect(url_for('main.dashboard'))
+    """Handles user registration."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard')) # Use blueprint name
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
+            # Check if this is the first user
             is_first_user = User.objects.count() == 0
+
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            user = User(username=form.username.data, email=form.email.data,
-                        password_hash=hashed_password, is_admin=is_first_user)
+            user = User(username=form.username.data,
+                        email=form.email.data,
+                        password_hash=hashed_password,
+                        is_admin=is_first_user) # Make first user admin
+                        # Theme will use default from model definition
             user.save()
+
             flash(f'Account created for {form.username.data}! You can now log in.', 'success')
-            if is_first_user: flash('As the first user, you have been granted Admin privileges.', 'info')
-            return redirect(url_for('main.login'))
-        except NotUniqueError: flash('Username or Email already exists.', 'danger')
-        except Exception as e: log.error(f"Reg Error: {e}", exc_info=True); flash('Error during registration.', 'danger')
+            if is_first_user:
+                flash('As the first user, you have been granted Admin privileges.', 'info')
+            return redirect(url_for('main.login')) # Use blueprint name
+        except NotUniqueError:
+             flash('Username or Email already exists. Please choose different ones.', 'danger')
+        except Exception as e:
+             log.error(f"Error during registration for {form.username.data}: {e}", exc_info=True)
+             flash(f'An error occurred during registration. Please try again.', 'danger')
     return render_template('register.html', title='Register', form=form)
 
 @main_routes.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated: return redirect(url_for('main.dashboard'))
+    """Handles user login."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard')) # Use blueprint name
     form = LoginForm()
     if form.validate_on_submit():
         user = User.objects(email=form.email.data).first()
         if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember.data)
+            login_user(user, remember=form.remember.data) # Uses login_manager implicitly
             next_page = request.args.get('next')
             flash('Login Successful!', 'success')
-            if next_page and next_page.startswith('/') and not next_page.startswith('//'): return redirect(next_page)
-            else: return redirect(url_for('main.dashboard'))
-        else: flash('Login Unsuccessful. Check email/password', 'danger')
+            # Basic security check for next_page to prevent open redirect
+            if next_page and next_page.startswith('/') and not next_page.startswith('//'):
+                 return redirect(next_page)
+            else:
+                 return redirect(url_for('main.dashboard')) # Default redirect
+        else:
+            flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
 @main_routes.route('/logout')
 @login_required
 def logout():
-    logout_user(); flash('Logged out.', 'info'); return redirect(url_for('main.index'))
+    """Handles user logout."""
+    logout_user() # Uses login_manager implicitly
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('main.index')) # Use blueprint name
 
 @main_routes.route('/dashboard')
 @login_required
 def dashboard():
+    """User dashboard."""
     if current_user.is_admin:
-        projects = Project.objects.order_by('-created_at'); tasks = Task.objects.order_by('-created_at'); users = User.objects.order_by('username')
-        return render_template('dashboard.html', title='Admin Dashboard', projects=projects, tasks=tasks, users=users)
+        # Admin Dashboard: Show project overview, user stats, etc.
+        projects = Project.objects.order_by('-created_at')
+        tasks = Task.objects.order_by('-created_at') # Or filter by status
+        users = User.objects.order_by('username')
+        return render_template('dashboard.html', title='Admin Dashboard',
+                               projects=projects, tasks=tasks, users=users)
     else:
+        # Regular User Dashboard: Show assigned tasks
         assigned_tasks = Task.objects(assigned_to=current_user).order_by('due_date', 'status')
         return render_template('dashboard.html', title='My Dashboard', assigned_tasks=assigned_tasks)
 
+
 # --- Profile Routes ---
+
 @main_routes.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    form = UpdateProfileForm(original_username=current_user.username, original_email=current_user.email)
+    """Displays and handles updates for the user's profile."""
+    form = UpdateProfileForm(
+        original_username=current_user.username,
+        original_email=current_user.email
+    )
     if form.validate_on_submit():
         try:
             needs_save = False
-            if current_user.email != form.email.data: current_user.email = form.email.data; needs_save = True
-            if current_user.theme != form.theme.data: current_user.theme = form.theme.data; needs_save = True
-            if needs_save: current_user.save(); flash('Profile updated!', 'success'); log.info(f"User '{current_user.username}' updated profile.")
-            else: flash('No changes detected.', 'info')
+            # Username typically not changeable after registration
+            # if current_user.username != form.username.data:
+            #     current_user.username = form.username.data
+            #     needs_save = True
+            if current_user.email != form.email.data:
+                current_user.email = form.email.data
+                needs_save = True
+            if current_user.theme != form.theme.data:
+                current_user.theme = form.theme.data
+                needs_save = True
+
+            if needs_save:
+                current_user.save()
+                flash('Your profile has been updated!', 'success')
+                log.info(f"User '{current_user.username}' updated profile. Theme set to '{current_user.theme}'.")
+            else: flash('No changes detected in profile.', 'info')
             return redirect(url_for('main.profile'))
-        except NotUniqueError: flash('Update failed. Email already in use.', 'danger')
-        except Exception as e: log.error(f"Profile update error: {e}", exc_info=True); flash('Error updating profile.', 'danger')
+
+        except NotUniqueError: flash('Update failed. Email is already in use.', 'danger')
+        except MongoValidationError as e:
+            log.error(f"Validation error updating profile: {e}", exc_info=True); flash(f'Validation error: {e}', 'danger')
+        except Exception as e:
+            log.error(f"Error updating profile: {e}", exc_info=True); flash('Error updating profile.', 'danger')
     elif request.method == 'GET':
         form.username.data = current_user.username; form.email.data = current_user.email
         form.theme.data = getattr(current_user, 'theme', None) or form.theme.default
     elif not form.validate_on_submit(): log.warning(f"Profile validation failed: {form.errors}")
     return render_template('profile.html', title='My Profile', form=form)
 
+
 # --- Project Routes ---
+
 @main_routes.route('/projects')
 @login_required
 def list_projects():
     projects = Project.objects.order_by('-created_at'); return render_template('projects.html', title='Projects', projects=projects)
 
 @main_routes.route('/project/new', methods=['GET', 'POST'])
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def create_project():
     form = ProjectForm()
     if form.validate_on_submit():
@@ -127,7 +195,8 @@ def project_detail(project_id):
 
 # --- Work Package Routes ---
 @main_routes.route('/project/<project_id>/work_package/new', methods=['GET', 'POST'])
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def create_work_package(project_id):
     project = Project.objects(pk=project_id).first_or_404()
     form = WorkPackageForm()
@@ -140,10 +209,10 @@ def create_work_package(project_id):
 
 # --- Milestone Routes ---
 @main_routes.route('/project/<project_id>/milestone/new', methods=['GET', 'POST'])
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def create_milestone(project_id):
-    project = Project.objects(pk=project_id).first_or_404()
-    form = MilestoneForm()
+    project = Project.objects(pk=project_id).first_or_404(); form = MilestoneForm()
     if form.validate_on_submit():
         try:
             milestone = Milestone(name=form.name.data, description=form.description.data, project=project, target_date=form.target_date.data, created_by=current_user)
@@ -159,7 +228,8 @@ def project_roadmap(project_id):
 
 # --- Task Routes ---
 @main_routes.route('/project/<project_id>/task/new', methods=['GET', 'POST'])
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def create_task(project_id):
     project = Project.objects(pk=project_id).first_or_404(); form = TaskForm(project_id=project_id)
     if form.validate_on_submit():
@@ -255,7 +325,8 @@ def list_chat_groups(project_id):
     return render_template('chat/list_groups.html', title=f"{project.name} - Chat", project=project, groups=groups)
 
 @main_routes.route('/project/<project_id>/chat/new', methods=['GET', 'POST'])
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def create_chat_group(project_id):
     project = Project.objects(pk=project_id).first_or_404(); form = ChatGroupForm()
     if form.validate_on_submit():
@@ -267,7 +338,7 @@ def create_chat_group(project_id):
 
 @main_routes.route('/project/<project_id>/chat/<group_id>', methods=['GET'])
 @login_required
-def view_chat_group(group_id, project_id): # Note: order matters if route matches project_id first
+def view_chat_group(group_id, project_id): # Correct order
     project = Project.objects(pk=project_id).first_or_404()
     group = ChatGroup.objects(pk=group_id, project=project).first_or_404()
     messages = group.get_messages(limit=100).reverse(); message_form = ChatMessageForm()
@@ -276,15 +347,13 @@ def view_chat_group(group_id, project_id): # Note: order matters if route matche
 @main_routes.route('/project/<project_id>/chat/<group_id>/message', methods=['POST'])
 @login_required
 def post_chat_message(project_id, group_id):
-    # Ensure project/group exist and user has permission (simplified check here)
     group = ChatGroup.objects(pk=group_id, project=project_id).first()
-    if not group: return jsonify({'status': 'error', 'message': 'Group not found or access denied.'}), 404
-    form = ChatMessageForm() # Validate using WTForms CSRF
+    if not group: return jsonify({'status': 'error', 'message': 'Group not found/access denied.'}), 404
+    form = ChatMessageForm()
     if form.validate_on_submit():
         try:
             message = ChatMessage(group=group, sender=current_user, content=form.content.data); message.save()
-            # TODO: Broadcast via WebSocket for real-time
-            return jsonify({'status': 'success', 'message': 'Message sent.'}), 201 # Return minimal success for AJAX
+            return jsonify({'status': 'success', 'message': 'Message sent.'}), 201
         except Exception as e: log.error(f"Chat message post error: {e}", exc_info=True); return jsonify({'status': 'error', 'message': 'Failed to send.'}), 500
     else:
         errors = [e for field, errs in form.errors.items() for e in errs]
@@ -292,18 +361,21 @@ def post_chat_message(project_id, group_id):
 
 # --- Admin Routes ---
 @main_routes.route('/admin')
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def admin_console():
     counts = {'users': User.objects.count(), 'projects': Project.objects.count(), 'tasks': Task.objects.count()}
     return render_template('admin/console.html', title='Admin Console', **counts)
 
 @main_routes.route('/admin/users')
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def admin_list_users():
     users = User.objects.order_by('username'); return render_template('admin/users.html', title='Manage Users', users=users)
 
 @main_routes.route('/admin/user/<user_id>/toggle_admin', methods=['POST'])
-@login_required @admin_required
+@login_required
+@admin_required # Correctly stacked
 def admin_toggle_admin(user_id):
     user = User.objects(pk=user_id).first_or_404()
     if user == current_user and User.objects(is_admin=True).count() <= 1: flash('Cannot revoke self if only admin.', 'danger'); return redirect(url_for('main.admin_list_users'))
