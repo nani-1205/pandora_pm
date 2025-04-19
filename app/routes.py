@@ -2,7 +2,7 @@
 from flask import (
     render_template, url_for, flash, redirect, request, abort, Blueprint, current_app, jsonify
 )
-# Import extensions from the extensions file
+# --- Import extensions from the extensions file ---
 from .extensions import db, bcrypt, login_manager
 
 # Import Forms, Models, Decorators
@@ -341,19 +341,31 @@ def create_chat_group(project_id):
 def view_chat_group(group_id, project_id): # Correct order
     project = Project.objects(pk=project_id).first_or_404()
     group = ChatGroup.objects(pk=group_id, project=project).first_or_404()
-    messages = group.get_messages(limit=100).reverse(); message_form = ChatMessageForm()
+
+    # --- CORRECTED MESSAGE FETCHING ---
+    # 1. Fetch messages (newest first due to order_by in get_messages)
+    message_queryset = group.get_messages(limit=100)
+    # 2. Convert QuerySet to a list
+    message_list = list(message_queryset)
+    # 3. Reverse the Python list to get oldest first for display
+    messages = list(reversed(message_list)) # Use Python's built-in reversed()
+    # ---------------------------------
+
+    message_form = ChatMessageForm() # Form for sending new messages
     return render_template('chat/view_group.html', title=f"Chat: {group.name}", project=project, group=group, messages=messages, form=message_form)
 
 @main_routes.route('/project/<project_id>/chat/<group_id>/message', methods=['POST'])
 @login_required
 def post_chat_message(project_id, group_id):
+    # Ensure project/group exist and user has permission (simplified check here)
     group = ChatGroup.objects(pk=group_id, project=project_id).first()
-    if not group: return jsonify({'status': 'error', 'message': 'Group not found/access denied.'}), 404
-    form = ChatMessageForm()
+    if not group: return jsonify({'status': 'error', 'message': 'Group not found or access denied.'}), 404
+    form = ChatMessageForm() # Validate using WTForms CSRF
     if form.validate_on_submit():
         try:
             message = ChatMessage(group=group, sender=current_user, content=form.content.data); message.save()
-            return jsonify({'status': 'success', 'message': 'Message sent.'}), 201
+            # TODO: Broadcast via WebSocket for real-time
+            return jsonify({'status': 'success', 'message': 'Message sent.'}), 201 # Return minimal success for AJAX
         except Exception as e: log.error(f"Chat message post error: {e}", exc_info=True); return jsonify({'status': 'error', 'message': 'Failed to send.'}), 500
     else:
         errors = [e for field, errs in form.errors.items() for e in errs]
@@ -382,6 +394,7 @@ def admin_toggle_admin(user_id):
     try: user.is_admin = not user.is_admin; user.save(); status = "granted" if user.is_admin else "revoked"; flash(f'Admin {status} for {user.username}.', 'success')
     except Exception as e: log.error(f"Admin toggle error: {e}", exc_info=True); flash(f'Error updating status: {e}', 'danger')
     return redirect(url_for('main.admin_list_users'))
+
 
 # --- Error Handlers ---
 @main_routes.app_errorhandler(404)
